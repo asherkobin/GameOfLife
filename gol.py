@@ -135,6 +135,9 @@ class CellMatrix():
     if north_west_cell and north_west_cell.get_state() == CellState.ALIVE:
       cell_unit.add_neighbor()
 
+    nc = cell_unit.get_neighbor_count()
+    return nc
+
   def get_north_cell(self, row_idx, col_idx):
     north_cell = None
     if row_idx > 0:
@@ -208,8 +211,9 @@ class CellMatrix():
         elif cell_unit.get_state() is CellState.DEAD:
           if cell_unit.get_neighbor_count() == 3:
             new_cell_unit = CellUnit(cell_unit.value, CellState.ALIVE)
-            new_cell_matrix.put_cell_unit(new_cell_unit, row_idx, col_idx)
-
+          else:
+            new_cell_unit = CellUnit(cell_unit.value, CellState.DEAD)
+          new_cell_matrix.put_cell_unit(new_cell_unit, row_idx, col_idx)
     return new_cell_matrix
 
 
@@ -220,28 +224,43 @@ first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 1, 1)
 first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 2, 2)
 first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 3, 3)
 first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 4, 4)
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 5, 5)
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 6, 6)
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 7, 7)
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 8, 8)
 
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 0, 8)
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 1, 7)
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 2, 6)
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 3, 5)
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 4, 4)
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 5, 3)
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 6, 2)
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 7, 1)
-first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 8, 0)
 
+first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 0, 4)
+first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 1, 3)
+first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 2, 2)
+first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 3, 1)
+first_genration.put_cell_unit(CellUnit(0, CellState.ALIVE), 4, 0)
+
+print("1")
 print(first_genration.get_pretty_grid())
-
 next_generation = first_genration.evolve()
+print("2")
 print(next_generation.get_pretty_grid())
 next_generation = next_generation.evolve()
-print(next_generation.get_pretty_grid())
-next_generation = first_genration.evolve()
+print("3")
 print(next_generation.get_pretty_grid())
 next_generation = next_generation.evolve()
+print("4")
+print(next_generation.get_pretty_grid())
+next_generation = next_generation.evolve()
+print("5")
+print(next_generation.get_pretty_grid())
+next_generation = next_generation.evolve()
+print("6")
+print(next_generation.get_pretty_grid())
+next_generation = next_generation.evolve()
+print("7")
+print(next_generation.get_pretty_grid())
+next_generation = next_generation.evolve()
+print("8")
+print(next_generation.get_pretty_grid())
+next_generation = next_generation.evolve()
+print("9")
+print(next_generation.get_pretty_grid())
+next_generation = next_generation.evolve()
+print("10")
+print(next_generation.get_pretty_grid())
+next_generation = next_generation.evolve()
+print("11")
 print(next_generation.get_pretty_grid())
