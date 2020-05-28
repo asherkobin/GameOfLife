@@ -8,8 +8,6 @@ class CellNeighborCounter():
     if cell_unit.get_state() == CellState.EMPTY:
       raise ValueError("Encoutered CellState.EMPTY")
 
-    # print(cell_unit.get_neighbor_count())
-    
     north_cell = self.navigator.get_north_cell(row_idx, col_idx)
     if north_cell and north_cell.get_state() == CellState.ALIVE:
       cell_unit.add_neighbor()
@@ -41,5 +39,5 @@ class CellNeighborCounter():
     north_west_cell = self.navigator.get_north_west_cell(row_idx, col_idx)
     if north_west_cell and north_west_cell.get_state() == CellState.ALIVE:
       cell_unit.add_neighbor()
-
+    
     return cell_unit.get_neighbor_count()

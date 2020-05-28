@@ -1,4 +1,7 @@
+import os
+import time
 import curses
+from curses.textpad import rectangle
 from cell_matrix import CellMatrix
 from cell_state import CellState
 
@@ -54,94 +57,143 @@ def test_gol():
   print("11")
   print(next_generation.get_pretty_grid())
 
-def start_gol(stdscr):
-  height, width = stdscr.getmaxyx()
-  cell_matrix = CellMatrix(height, width)
-  k = 0
-  cursor_x = 0
-  cursor_y = 0
+def setup_initial_pattern(cell_matrix):
+  design_width = 5
+  design_height = 5
 
-  # Clear and refresh the screen for a blank canvas
+  start_row = cell_matrix.num_rows // 2 - design_height // 2
+  start_col = cell_matrix.num_cols // 2 - design_width // 2
+  
+  cell_matrix.update_cell_unit(start_row + 0, start_col + 0, CellState.ALIVE)
+  cell_matrix.update_cell_unit(start_row + 1, start_col + 1, CellState.ALIVE)
+  cell_matrix.update_cell_unit(start_row + 2, start_col + 2, CellState.ALIVE)
+  cell_matrix.update_cell_unit(start_row + 3, start_col + 3, CellState.ALIVE)
+  cell_matrix.update_cell_unit(start_row + 4, start_col + 4, CellState.ALIVE)
+
+  cell_matrix.update_cell_unit(start_row + 0, start_col + 4, CellState.ALIVE)
+  cell_matrix.update_cell_unit(start_row + 1, start_col + 3, CellState.ALIVE)
+  cell_matrix.update_cell_unit(start_row + 2, start_col + 2, CellState.ALIVE)
+  cell_matrix.update_cell_unit(start_row + 3, start_col + 1, CellState.ALIVE)
+  cell_matrix.update_cell_unit(start_row + 4, start_col + 0, CellState.ALIVE)
+
+def print_matrix(stdscr, cell_matrix):
+  stdscr.attron(curses.color_pair(2))
+  for row_idx, row in enumerate(cell_matrix.matrix):
+    for col_idx, cell_unit in enumerate(row):
+      if cell_unit.get_state() == CellState.ALIVE:
+        stdscr.addstr(row_idx + 1, col_idx + 1, "*")
+  stdscr.attroff(curses.color_pair(2))
+
+def play_gol(stdscr):
+  sh, sw = stdscr.getmaxyx()
+  display_area = [[0, 0], [sh - 2, sw - 1]]
+  cell_matrix = CellMatrix(display_area[1][0], display_area[1][1])
+  cursor_pos = [5,5]
+
+  setup_initial_pattern(cell_matrix)
+
+  rectangle(stdscr, display_area[0][0], display_area[0][1], display_area[1][0], display_area[1][1])
+  print_matrix(stdscr, cell_matrix)
+  #stdscr.addstr(cursor_pos[0], cursor_pos[1], "*")
+
+  stdscr.refresh()
+  
+  while True:
+    
+    key = stdscr.getch()
+
+    next_genration = cell_matrix.evolve()
+    
+    stdscr.clear()    
+    rectangle(stdscr, display_area[0][0], display_area[0][1], display_area[1][0], display_area[1][1])
+    print_matrix(stdscr, next_genration)
+    
+    cell_matrix = next_genration
+    
+    if key == curses.KEY_UP:
+      cursor_pos[0] -= 1
+    elif key == curses.KEY_DOWN:
+      cursor_pos[0] += 1
+    elif key == curses.KEY_LEFT:
+      cursor_pos[1] -= 1
+    elif key == curses.KEY_RIGHT:
+      cursor_pos[1] += 1
+    elif key == curses.ascii.ESC:
+      break
+
+    #stdscr.addstr(cursor_pos[0], cursor_pos[1], "*")
+    
+    stdscr.refresh()
+
+menu = ["Play", "Exit"]
+
+def print_menu(stdscr, selected_menu_idx):
   stdscr.clear()
+  h, w = stdscr.getmaxyx()
+
+  for idx, item in enumerate(menu):
+    x = w // 2 - len(item) // 2
+    y = h // 2 - len(menu) // 2 + idx
+    if idx == selected_menu_idx:
+      stdscr.attron(curses.color_pair(1))
+      stdscr.addstr(y, x, item)
+      stdscr.attroff(curses.color_pair(1))
+    else:
+      stdscr.addstr(y, x, item)
+
   stdscr.refresh()
 
-  # Start colors in curses
-  curses.start_color()
-  curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
-  curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
-  curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+def setup_gol(stdscr):
+  curses.curs_set(0)
+  curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
+  curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+  menu_idx = 0
+  
+  print_menu(stdscr, menu_idx)
 
-  # Loop where k is the last character pressed
-  while (k != ord('q')):
+  while True:
+    key = stdscr.getch()
 
-      # Initialization
-      stdscr.clear()
-      height, width = stdscr.getmaxyx()
+    stdscr.clear()
 
-      if k == curses.KEY_DOWN:
-          cursor_y = cursor_y + 1
-      elif k == curses.KEY_UP:
-          cursor_y = cursor_y - 1
-      elif k == curses.KEY_RIGHT:
-          cursor_x = cursor_x + 1
-      elif k == curses.KEY_LEFT:
-          cursor_x = cursor_x - 1
+    if key == curses.KEY_UP and menu_idx > 0:
+      menu_idx -= 1
+    elif key == curses.KEY_DOWN and menu_idx < len(menu) - 1:
+      menu_idx += 1
+    elif key == curses.KEY_ENTER or key in [10, 13]:
+      if menu[menu_idx] == "Exit":
+        break
+      elif menu[menu_idx] == "Play":
+        play_gol(stdscr)
 
-      cursor_x = max(0, cursor_x)
-      cursor_x = min(width-1, cursor_x)
+    print_menu(stdscr, menu_idx)
 
-      cursor_y = max(0, cursor_y)
-      cursor_y = min(height-1, cursor_y)
+    stdscr.refresh()
 
-      # Declaration of strings
-      title = "The Game of Life"[:width-1]
-      subtitle = "Written by Asher Kobin"[:width-1]
-      keystr = "Last key pressed: {}".format(k)[:width-1]
-      statusbarstr = "Press 'q' to exit | STATUS BAR | Pos: {}, {}".format(cursor_x, cursor_y)
-      if k == 0:
-          keystr = "No key press detected..."[:width-1]
 
-      # Centering calculations
-      start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
-      start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
-      start_x_keystr = int((width // 2) - (len(keystr) // 2) - len(keystr) % 2)
-      start_y = int((height // 2) - 2)
 
-      # Rendering some text
-      whstr = "Width: {}, Height: {}".format(width, height)
-      stdscr.addstr(0, 0, whstr, curses.color_pair(1))
 
-      # Render status bar
-      stdscr.attron(curses.color_pair(3))
-      stdscr.addstr(height-1, 0, statusbarstr)
-      stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
-      stdscr.attroff(curses.color_pair(3))
 
-      # Turning on attributes for title
-      stdscr.attron(curses.color_pair(2))
-      stdscr.attron(curses.A_BOLD)
+ # h, w = stdscr.getmaxyx()
 
-      # Rendering title
-      stdscr.addstr(start_y, start_x_title, title)
+  # text = "Hello World"
 
-      # Turning off attributes for title
-      stdscr.attroff(curses.color_pair(2))
-      stdscr.attroff(curses.A_BOLD)
+  # x = w // 2 - len(text) // 2
+  # y = h // 2
 
-      # Print rest of text
-      stdscr.addstr(start_y + 1, start_x_subtitle, subtitle)
-      stdscr.addstr(start_y + 3, (width // 2) - 2, '-' * 4)
-      stdscr.addstr(start_y + 5, start_x_keystr, keystr)
-      stdscr.move(cursor_y, cursor_x)
+  # stdscr.attron(curses.color_pair(1))
+  # stdscr.addstr(y, x, text)
+  # stdscr.attroff(curses.color_pair(1))
+  
+  # stdscr.refresh()
+  # time.sleep(3)
 
-      # Refresh the screen
-      stdscr.refresh()
-
-      # Wait for next input
-      k = stdscr.getch()
 
 def main():
-    curses.wrapper(start_gol)
+  os.environ.setdefault("ESCDELAY", "0")
+  curses.wrapper(setup_gol)
+  
+  #test_gol()
 
 if __name__ == "__main__":
-    main()
+  main()

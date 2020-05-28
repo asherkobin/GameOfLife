@@ -7,7 +7,7 @@ class CellMatrix():
   def __init__(self, height = 15, width = 15):
     self.num_rows = height
     self.num_cols = width
-    self.matrix = [[CellUnit() for _ in range(self.num_rows)] for _ in range(self.num_cols)]
+    self.matrix = [[CellUnit() for _ in range(self.num_cols)] for _ in range(self.num_rows)]
     self.navigator = CellMatrixNavigator(self, self.num_rows, self.num_cols)
     self.counter = CellNeighborCounter(self.navigator)
 
@@ -72,9 +72,9 @@ class CellMatrix():
     for row_idx in range(self.num_rows):
       for col_idx in range(self.num_cols):
         self.counter.count_neighbors(self.matrix[row_idx][col_idx], row_idx, col_idx)
-  
+
   def evolve(self):
-    new_cell_matrix = CellMatrix()
+    new_cell_matrix = CellMatrix(self.num_rows, self.num_cols)
 
     self.update_neighbor_count()
 

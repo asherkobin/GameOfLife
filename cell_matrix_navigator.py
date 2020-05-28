@@ -4,7 +4,7 @@ class CellMatrixNavigator():
   def __init__(self, cell_matrix, num_rows, num_cols):
     self.cell_matrix = cell_matrix
     self.num_rows = num_rows
-    self.num_cols = num_rows
+    self.num_cols = num_cols
   
   def get_north_cell(self, row_idx, col_idx):
     north_cell = None
