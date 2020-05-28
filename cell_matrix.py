@@ -4,11 +4,11 @@ from cell_matrix_navigator import CellMatrixNavigator
 from cell_neighbor_counter import CellNeighborCounter
 
 class CellMatrix():
-  def __init__(self, num_rows = 15, num_cols = 15):
-    self.num_rows = num_rows
-    self.num_cols = num_cols
-    self.matrix = [[CellUnit() for _ in range(num_rows)] for _ in range(num_cols)]
-    self.navigator = CellMatrixNavigator(self, num_rows, num_cols)
+  def __init__(self, height = 15, width = 15):
+    self.num_rows = height
+    self.num_cols = width
+    self.matrix = [[CellUnit() for _ in range(self.num_rows)] for _ in range(self.num_cols)]
+    self.navigator = CellMatrixNavigator(self, self.num_rows, self.num_cols)
     self.counter = CellNeighborCounter(self.navigator)
 
   def __str__(self):
