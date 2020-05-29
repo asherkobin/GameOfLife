@@ -24,3 +24,4 @@ BUGS:
 TODO:
 - Count generations
 - Color particles based on age
+- Create background grid

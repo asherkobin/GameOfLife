@@ -58,18 +58,29 @@ def print_matrix(stdscr, cell_matrix, display_area):
   cell_char = "*"
   cell_char =  u"\u220E".encode("utf-8") # BLOCK - TODO: Randomize
   drew_cell = False
-  
-  stdscr.attron(curses.color_pair(2))
+
+  # 2: Normal Cell
+  # 4: Old Cell
+  # 5: New Cell
   
   # This is where CellMatrix is drawn to the display buffer
   for row_idx, row in enumerate(cell_matrix.matrix):
     for col_idx, cell_unit in enumerate(row):
       if col_idx < display_area[1][1] - 1 and row_idx < display_area[1][0] - 1:
         if cell_unit.get_state() == CellState.ALIVE:
-          stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+          if cell_unit.get_age() > 20:
+            stdscr.attron(curses.color_pair(4))
+            stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+            stdscr.attroff(curses.color_pair(4))
+          elif cell_unit.get_age() < 5:
+            stdscr.attron(curses.color_pair(5))
+            stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+            stdscr.attroff(curses.color_pair(5))
+          else:
+            stdscr.attron(curses.color_pair(6))
+            stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+            stdscr.attroff(curses.color_pair(6))
           drew_cell = True
-  
-  stdscr.attroff(curses.color_pair(2))
 
   return drew_cell
 
@@ -263,8 +274,13 @@ def print_menu(stdscr, selected_menu_idx, display_area):
 
   welcome_msg = "Welcome to the Game of Life"
   author_msg = "Implemented by Asher Kobin"
+  
+  if h < 25:
+    y = 1
+  else:
+    y = 10
   x = w // 2 - len(welcome_msg) // 2
-  y = 10
+
   stdscr.attron(curses.color_pair(2) | curses.A_BOLD)
   stdscr.addstr(y, x, welcome_msg)
   stdscr.attroff(curses.color_pair(2) | curses.A_BOLD)
@@ -295,9 +311,13 @@ def print_menu(stdscr, selected_menu_idx, display_area):
 
 def setup_gol(stdscr):
   curses.curs_set(0)
+  # create color sets
   curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
-  curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+  curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK) # regular cell
   curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLUE)
+  curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK) # old cell
+  curses.init_pair(5, curses.COLOR_YELLOW, curses.COLOR_BLACK) # new cell
+  curses.init_pair(6, curses.COLOR_MAGENTA, curses.COLOR_BLACK) # new cell
   menu_idx = 0
   screen_hight, screen_width = stdscr.getmaxyx()
   display_area = [[0, 0], [screen_hight - 2, screen_width - 1]]

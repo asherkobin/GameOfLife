@@ -14,10 +14,10 @@ class CellMatrix():
   def __str__(self):
     return self.get_values_grid()
 
-  def update_cell_unit(self, row_idx, col_idx, cell_state, value = None):
+  def update_cell_unit(self, row_idx, col_idx, cell_state, cell_age = 0):
     cell_unit = self.get_cell_unit(row_idx, col_idx)
     cell_unit.set_state(cell_state)
-    cell_unit.set_value(value)
+    cell_unit.set_age(cell_age)
     return cell_unit
 
   def get_cell_unit(self, row_idx, col_idx):
@@ -87,7 +87,8 @@ class CellMatrix():
           if cell_unit.get_neighbor_count() not in [2, 3]:
             new_cell_matrix.update_cell_unit(row_idx, col_idx, CellState.DEAD)
           else:
-            new_cell_matrix.update_cell_unit(row_idx, col_idx, CellState.ALIVE)
+            new_cell_age = cell_unit.get_age()
+            new_cell_matrix.update_cell_unit(row_idx, col_idx, CellState.ALIVE, new_cell_age + 1)
         elif cell_unit.get_state() is CellState.DEAD:
           if cell_unit.get_neighbor_count() == 3:
             new_cell_matrix.update_cell_unit(row_idx, col_idx, CellState.ALIVE)
