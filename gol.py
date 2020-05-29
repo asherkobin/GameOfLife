@@ -34,10 +34,12 @@ predefined_patterns = {
 }
 
 custom_idx = 1
+default_timer = 0.01
+num_of_evolutions = 0
 
 menu = [key for key in predefined_patterns.keys()]
-menu = ["Custom"] + menu
-menu.append("Exit")
+menu.append("Custom Pattern")
+#menu.append("Exit") # user can press ESC which is easier
 
 def setup_initial_pattern(cell_matrix, shape_name):
   pattern_matrix = predefined_patterns[shape_name]
@@ -55,6 +57,7 @@ def setup_initial_pattern(cell_matrix, shape_name):
 def print_matrix(stdscr, cell_matrix, display_area):
   cell_char = "*"
   cell_char =  u"\u220E".encode("utf-8") # BLOCK - TODO: Randomize
+  drew_cell = False
   
   stdscr.attron(curses.color_pair(2))
   
@@ -64,15 +67,20 @@ def print_matrix(stdscr, cell_matrix, display_area):
       if col_idx < display_area[1][1] - 1 and row_idx < display_area[1][0] - 1:
         if cell_unit.get_state() == CellState.ALIVE:
           stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+          drew_cell = True
   
   stdscr.attroff(curses.color_pair(2))
+
+  return drew_cell
 
 def print_display_ui(stdscr, display_area):
   # display rectangle
   rectangle(stdscr, display_area[0][0], display_area[0][1], display_area[1][0], display_area[1][1])
 
+  timer_ms = default_timer * 1000
+
   # status bar
-  status_bar_text = " Press ESC to Quit"
+  status_bar_text = f" Press ESC to Quit | Use ARROW UP or ARROW DOWN to Change Speed | Interval: {timer_ms} ms | Generations: {num_of_evolutions}"
   stdscr.attron(curses.color_pair(1))
   stdscr.addstr(display_area[1][0] + 1, 0, status_bar_text)
   stdscr.addstr(display_area[1][0] + 1, 0 + len(status_bar_text), " " * ((display_area[1][1] + 1) - len(status_bar_text) - 1))
@@ -83,7 +91,7 @@ def print_edit_ui(stdscr, display_area):
   rectangle(stdscr, display_area[0][0], display_area[0][1], display_area[1][0], display_area[1][1])
 
   # status bar
-  status_bar_text = " Press SPACE to create a cell"
+  status_bar_text = " Use ARROW keys to Move | Press SPACE to Add Cell"
   stdscr.attron(curses.color_pair(1))
   stdscr.addstr(display_area[1][0] + 1, 0, status_bar_text)
   stdscr.addstr(display_area[1][0] + 1, 0 + len(status_bar_text), " " * ((display_area[1][1] + 1) - len(status_bar_text) - 1))
@@ -100,23 +108,36 @@ def play_gol(stdscr, shape_name, display_area):
   stdscr.refresh()
   
   stdscr.nodelay(1) # instruct "getch" to not block
+
+  global default_timer
+  global num_of_evolutions  
   
   while True:
     key = stdscr.getch()
 
-    time.sleep(0.25) # TODO: make variable
+    time.sleep(default_timer)
     next_genration = cell_matrix.evolve()
+
+    num_of_evolutions += 1
     
     stdscr.clear()    
     
     print_display_ui(stdscr, display_area)
-    print_matrix(stdscr, next_genration, display_area)
+    continue_evolution = print_matrix(stdscr, next_genration, display_area)
+
+    if continue_evolution == False:
+      break
     
     cell_matrix = next_genration
 
     if key == curses.ascii.ESC:
       stdscr.nodelay(0) # reset "getch" to block
       break
+    elif key == curses.KEY_UP:
+      default_timer /= 2
+    elif key == curses.KEY_DOWN:
+      default_timer *= 2
+      pass
     
     stdscr.refresh()
 
@@ -236,19 +257,39 @@ def start_pattern_creation(stdscr, display_area): # Edit Mode
   
   return new_pattern_name
 
-def print_menu(stdscr, selected_menu_idx):
+def print_menu(stdscr, selected_menu_idx, display_area):
   stdscr.clear()
   h, w = stdscr.getmaxyx()
 
+  welcome_msg = "Welcome to the Game of Life"
+  author_msg = "Implemented by Asher Kobin"
+  x = w // 2 - len(welcome_msg) // 2
+  y = 10
+  stdscr.attron(curses.color_pair(2) | curses.A_BOLD)
+  stdscr.addstr(y, x, welcome_msg)
+  stdscr.attroff(curses.color_pair(2) | curses.A_BOLD)
+  stdscr.attron(curses.color_pair(2))
+  stdscr.addstr(y + 2, x, author_msg)
+  stdscr.attroff(curses.color_pair(2))
+  
   for idx, item in enumerate(menu):
     x = w // 2 - len(item) // 2
     y = h // 2 - len(menu) // 2 + idx
     if idx == selected_menu_idx:
-      stdscr.attron(curses.color_pair(1))
+      stdscr.attron(curses.color_pair(3))
+      stdscr.addstr(y, x - 1, " ") # AKA "padding-left"
       stdscr.addstr(y, x, item)
-      stdscr.attroff(curses.color_pair(1))
+      stdscr.addstr(y, x + len(item), " ") # AKA "padding-right"
+      stdscr.attroff(curses.color_pair(3))
     else:
       stdscr.addstr(y, x, item)
+
+  # status bar
+  status_bar_text = " Use ARROW keys to Select Pattern | Press ESC to Quit"
+  stdscr.attron(curses.color_pair(1))
+  stdscr.addstr(display_area[1][0] + 1, 0, status_bar_text)
+  stdscr.addstr(display_area[1][0] + 1, 0 + len(status_bar_text), " " * ((display_area[1][1] + 1) - len(status_bar_text) - 1))
+  stdscr.attroff(curses.color_pair(1))
 
   stdscr.refresh()
 
@@ -256,13 +297,14 @@ def setup_gol(stdscr):
   curses.curs_set(0)
   curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
   curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+  curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLUE)
   menu_idx = 0
   screen_hight, screen_width = stdscr.getmaxyx()
   display_area = [[0, 0], [screen_hight - 2, screen_width - 1]]
   
   # TODO: Display the rules and other interesting info
   
-  print_menu(stdscr, menu_idx)
+  print_menu(stdscr, menu_idx, display_area)
 
   while True: # Breaking out of this loop will exit the application
     key = stdscr.getch()
@@ -276,18 +318,18 @@ def setup_gol(stdscr):
       menu_idx -= 1
     elif key == curses.KEY_DOWN and menu_idx < len(menu) - 1:
       menu_idx += 1
-    elif key == curses.KEY_ENTER or key in [10, 13]:
+    elif key == curses.KEY_ENTER or key in [10, 13] or key == curses.ascii.SP:
       if menu[menu_idx] == "Exit":
         break
-      elif menu[menu_idx] == "Custom":
+      elif menu[menu_idx] == "Custom Pattern":
         new_pattern_name = start_pattern_creation(stdscr, display_area) # Edit Mode
-        menu = [new_pattern_name] + menu
+        menu.insert(len(menu) - 1, new_pattern_name)
       else:
         play_gol(stdscr, menu[menu_idx], display_area) # Execute
     elif key == curses.ascii.ESC: # Exit
       break
 
-    print_menu(stdscr, menu_idx)
+    print_menu(stdscr, menu_idx, display_area)
 
     stdscr.refresh()
 

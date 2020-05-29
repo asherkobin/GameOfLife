@@ -18,3 +18,9 @@ else if C is dead
   if neighbors == 3:
     C become alive
 
+BUGS:
+- Bounds on EDIT
+- Menu Ordering after EDIT
+TODO:
+- Count generations
+- Color particles based on age
