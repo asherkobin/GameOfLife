@@ -1,6 +1,7 @@
 import os
 import time
 import curses
+import random
 from curses.textpad import rectangle
 from cell_matrix import CellMatrix
 from cell_state import CellState
@@ -28,7 +29,11 @@ predefined_patterns = {
     [[0, 1, 0],
      [0, 0, 1],
      [1, 1, 1]],
+  "Line Goes Crazy":
+    [[1, 1, 1, 1, 1, 0, 0, 1, 1, 1]]
 }
+
+custom_idx = 1
 
 menu = [key for key in predefined_patterns.keys()]
 menu = ["Custom"] + menu
@@ -115,6 +120,36 @@ def play_gol(stdscr, shape_name, display_area):
     
     stdscr.refresh()
 
+def make_matrix_from_coords(cell_coordinate_sets):
+  min_row, min_col = cell_coordinate_sets[0]
+  max_row, max_col = cell_coordinate_sets[0]
+
+  for row, col in cell_coordinate_sets:
+    if row < min_row:
+      min_row = row
+    if col < min_col:
+      min_col = col
+    if row > max_row:
+      max_row = row
+    if col > max_col:
+      max_col = col
+
+  adj_rows = max_row - min_row + 1
+  adj_cols = max_col - min_col + 1
+  adj_cell_coordinate_sets = []
+  
+  for row, col in cell_coordinate_sets:
+    adj_cell_coordinate_sets.append((row - min_row, col - min_col))
+
+  matrix = [[0 for _ in range(adj_cols)] for _ in range(adj_rows)]
+
+  for row_idx in range(adj_rows):
+    for col_idx in range(adj_cols):
+      if (row_idx, col_idx) in adj_cell_coordinate_sets:
+        matrix[row_idx][col_idx] = 1
+  
+  return matrix
+
 def start_pattern_creation(stdscr, display_area): # Edit Mode
   new_pattern_name = "User Generated"
   cursor_row = display_area[1][0] // 2 
@@ -125,7 +160,7 @@ def start_pattern_creation(stdscr, display_area): # Edit Mode
   cursor_char_off = " "
   cell_char = "*"
   added_cell = False
-  list_of_cell_coordinate_sets = []
+  cell_coordinate_sets = []
   cursor_moved = False
   cursor_was_on_cell = False
   cursor_currently_on_cell = False
@@ -162,7 +197,7 @@ def start_pattern_creation(stdscr, display_area): # Edit Mode
       if cursor_was_on_cell:
         stdscr.addstr(prev_cursor_row, prev_cursor_col, cell_char)
 
-      if (cursor_row, cursor_col) in list_of_cell_coordinate_sets:
+      if (cursor_row, cursor_col) in cell_coordinate_sets:
         cursor_currently_on_cell = True
       
       if not cursor_currently_on_cell and not cursor_was_on_cell:
@@ -187,13 +222,17 @@ def start_pattern_creation(stdscr, display_area): # Edit Mode
       cursor_moved = False
     
     elif added_cell:
-      list_of_cell_coordinate_sets.append((cursor_row ,cursor_col))
+      cell_coordinate_sets.append((cursor_row ,cursor_col))
       stdscr.attron(curses.color_pair(1))
       stdscr.addstr(cursor_row, cursor_col, cell_char)
       stdscr.attroff(curses.color_pair(1))
       added_cell = False
 
-  stdscr.refresh()    
+  global custom_idx
+  new_pattern_name = new_pattern_name + " " + str(custom_idx)
+  new_pattern_matrix = make_matrix_from_coords(cell_coordinate_sets)
+  predefined_patterns[new_pattern_name] = new_pattern_matrix
+  custom_idx += 1
   
   return new_pattern_name
 
@@ -231,6 +270,7 @@ def setup_gol(stdscr):
     stdscr.clear()
 
     # Menu Handler
+    global menu
 
     if key == curses.KEY_UP and menu_idx > 0:
       menu_idx -= 1
@@ -241,8 +281,7 @@ def setup_gol(stdscr):
         break
       elif menu[menu_idx] == "Custom":
         new_pattern_name = start_pattern_creation(stdscr, display_area) # Edit Mode
-        # predefined_shapes = [new_pattern_name] + predefined_shapes # Add new pattern to list
-        # play_gol(stdscr, new_pattern_name, display_area) # Execute
+        menu = [new_pattern_name] + menu
       else:
         play_gol(stdscr, menu[menu_idx], display_area) # Execute
     elif key == curses.ascii.ESC: # Exit
