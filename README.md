@@ -21,6 +21,8 @@ else if C is dead
 BUGS:
 - Bounds on EDIT
 - Menu Ordering after EDIT
+- EDIT curosr not big enough
+
 TODO:
 - Count generations
 - Color particles based on age

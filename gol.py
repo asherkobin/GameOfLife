@@ -38,16 +38,27 @@ default_timer = 0.01
 num_of_evolutions = 0
 
 menu = [key for key in predefined_patterns.keys()]
+menu.append("Random Pattern")
 menu.append("Custom Pattern")
-#menu.append("Exit") # user can press ESC which is easier
 
-def setup_initial_pattern(cell_matrix, shape_name):
-  pattern_matrix = predefined_patterns[shape_name]
-  design_width = len(pattern_matrix)
-  design_height = len(pattern_matrix[0])
+def setup_initial_pattern(cell_matrix, shape_name, display_area):
+  if shape_name == "Random Pattern":
+    design_width = display_area[1][0]
+    design_height = display_area[1][1]
+    pattern_matrix = [[0 for _ in range(design_height)] for _ in range(design_width)]
+    for row_idx in range(design_width):
+      for col_idx in range(design_height):
+        if 1 == random.randint(1, 10):
+          pattern_matrix[row_idx][col_idx] = 1
+    start_row = 0
+    start_col = 0
+  else:
+    pattern_matrix = predefined_patterns[shape_name]
+    design_width = len(pattern_matrix)
+    design_height = len(pattern_matrix[0])
 
-  start_row = cell_matrix.num_rows // 2 - design_height // 2
-  start_col = cell_matrix.num_cols // 2 - design_width // 2
+    start_row = cell_matrix.num_rows // 2 - design_height // 2
+    start_col = cell_matrix.num_cols // 2 - design_width // 2
 
   for row_idx in range(design_width):
     for col_idx in range(design_height):
@@ -59,27 +70,33 @@ def print_matrix(stdscr, cell_matrix, display_area):
   cell_char =  u"\u220E".encode("utf-8") # BLOCK - TODO: Randomize
   drew_cell = False
 
-  # 2: Normal Cell
-  # 4: Old Cell
-  # 5: New Cell
+  # 4 - 8 color ages
   
   # This is where CellMatrix is drawn to the display buffer
   for row_idx, row in enumerate(cell_matrix.matrix):
     for col_idx, cell_unit in enumerate(row):
       if col_idx < display_area[1][1] - 1 and row_idx < display_area[1][0] - 1:
         if cell_unit.get_state() == CellState.ALIVE:
-          if cell_unit.get_age() > 20:
-            stdscr.attron(curses.color_pair(4))
+          if cell_unit.get_age() > 200:
+            stdscr.attron(curses.color_pair(8))
             stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
-            stdscr.attroff(curses.color_pair(4))
-          elif cell_unit.get_age() < 5:
+            stdscr.attroff(curses.color_pair(8))
+          elif cell_unit.get_age() > 100:
+            stdscr.attron(curses.color_pair(7))
+            stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+            stdscr.attroff(curses.color_pair(7))
+          elif cell_unit.get_age() > 20:
+            stdscr.attron(curses.color_pair(6))
+            stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+            stdscr.attroff(curses.color_pair(6))
+          elif cell_unit.get_age() > 10:
             stdscr.attron(curses.color_pair(5))
             stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
             stdscr.attroff(curses.color_pair(5))
           else:
-            stdscr.attron(curses.color_pair(6))
+            stdscr.attron(curses.color_pair(4))
             stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
-            stdscr.attroff(curses.color_pair(6))
+            stdscr.attroff(curses.color_pair(4))
           drew_cell = True
 
   return drew_cell
@@ -111,7 +128,7 @@ def print_edit_ui(stdscr, display_area):
 def play_gol(stdscr, shape_name, display_area):
   cell_matrix = CellMatrix(display_area[1][0], display_area[1][1])
 
-  setup_initial_pattern(cell_matrix, shape_name)
+  setup_initial_pattern(cell_matrix, shape_name, display_area)
 
   print_display_ui(stdscr, display_area)
   print_matrix(stdscr, cell_matrix, display_area)
@@ -122,12 +139,15 @@ def play_gol(stdscr, shape_name, display_area):
 
   global default_timer
   global num_of_evolutions  
+  continue_evolution = True
   
   while True:
     key = stdscr.getch()
 
     time.sleep(default_timer)
-    next_genration = cell_matrix.evolve()
+
+    if continue_evolution:
+      next_genration = cell_matrix.evolve()
 
     num_of_evolutions += 1
     
@@ -135,9 +155,6 @@ def play_gol(stdscr, shape_name, display_area):
     
     print_display_ui(stdscr, display_area)
     continue_evolution = print_matrix(stdscr, next_genration, display_area)
-
-    if continue_evolution == False:
-      break
     
     cell_matrix = next_genration
 
@@ -273,30 +290,32 @@ def print_menu(stdscr, selected_menu_idx, display_area):
   h, w = stdscr.getmaxyx()
 
   welcome_msg = "Welcome to the Game of Life"
-  author_msg = "Implemented by Asher Kobin"
+  author_msg = "Implemented in Python by Asher Kobin"
   
   if h < 25:
     y = 1
   else:
     y = 10
-  x = w // 2 - len(welcome_msg) // 2
+  
+  welcome_x = w // 2 - len(welcome_msg) // 2
+  author_x = w // 2 - len(author_msg) // 2
 
-  stdscr.attron(curses.color_pair(2) | curses.A_BOLD)
-  stdscr.addstr(y, x, welcome_msg)
-  stdscr.attroff(curses.color_pair(2) | curses.A_BOLD)
-  stdscr.attron(curses.color_pair(2))
-  stdscr.addstr(y + 2, x, author_msg)
-  stdscr.attroff(curses.color_pair(2))
+  stdscr.attron(curses.color_pair(3) | curses.A_BOLD)
+  stdscr.addstr(y, welcome_x, welcome_msg)
+  stdscr.attroff(curses.color_pair(3) | curses.A_BOLD)
+  stdscr.attron(curses.color_pair(3))
+  stdscr.addstr(y + 2, author_x, author_msg)
+  stdscr.attroff(curses.color_pair(3))
   
   for idx, item in enumerate(menu):
     x = w // 2 - len(item) // 2
     y = h // 2 - len(menu) // 2 + idx
     if idx == selected_menu_idx:
-      stdscr.attron(curses.color_pair(3))
+      stdscr.attron(curses.color_pair(2))
       stdscr.addstr(y, x - 1, " ") # AKA "padding-left"
       stdscr.addstr(y, x, item)
       stdscr.addstr(y, x + len(item), " ") # AKA "padding-right"
-      stdscr.attroff(curses.color_pair(3))
+      stdscr.attroff(curses.color_pair(2))
     else:
       stdscr.addstr(y, x, item)
 
@@ -313,11 +332,13 @@ def setup_gol(stdscr):
   curses.curs_set(0)
   # create color sets
   curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
-  curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK) # regular cell
-  curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLUE)
-  curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK) # old cell
-  curses.init_pair(5, curses.COLOR_YELLOW, curses.COLOR_BLACK) # new cell
-  curses.init_pair(6, curses.COLOR_MAGENTA, curses.COLOR_BLACK) # new cell
+  curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_BLUE)
+  curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)   # Text
+  curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)  # Cell Age 1
+  curses.init_pair(5, curses.COLOR_GREEN, curses.COLOR_BLACK)   # Cell Age 2
+  curses.init_pair(6, curses.COLOR_BLUE, curses.COLOR_BLACK)    # Cell Age 3
+  curses.init_pair(7, curses.COLOR_RED, curses.COLOR_BLACK)     # Cell Age 4
+  curses.init_pair(8, curses.COLOR_MAGENTA, curses.COLOR_BLACK) # Cell Age 5
   menu_idx = 0
   screen_hight, screen_width = stdscr.getmaxyx()
   display_area = [[0, 0], [screen_hight - 2, screen_width - 1]]
@@ -344,6 +365,8 @@ def setup_gol(stdscr):
       elif menu[menu_idx] == "Custom Pattern":
         new_pattern_name = start_pattern_creation(stdscr, display_area) # Edit Mode
         menu.insert(len(menu) - 1, new_pattern_name)
+      elif menu[menu_idx] == "Random Pattern":
+        play_gol(stdscr, menu[menu_idx], display_area)
       else:
         play_gol(stdscr, menu[menu_idx], display_area) # Execute
     elif key == curses.ascii.ESC: # Exit
