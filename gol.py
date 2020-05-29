@@ -108,7 +108,7 @@ def print_display_ui(stdscr, display_area):
   timer_ms = default_timer * 1000
 
   # status bar
-  status_bar_text = f" Press ESC to Quit | Use ARROW UP or ARROW DOWN to Change Speed | Interval: {timer_ms} ms | Generations: {num_of_evolutions}"
+  status_bar_text = f" Press ESC to Quit | Use ARROW UP or ARROW DOWN to Change Speed | SPACE to Pause (Any KEY for One Evolution) | Interval: {timer_ms} ms | Generations: {num_of_evolutions}"
   stdscr.attron(curses.color_pair(1))
   stdscr.addstr(display_area[1][0] + 1, 0, status_bar_text)
   stdscr.addstr(display_area[1][0] + 1, 0 + len(status_bar_text), " " * ((display_area[1][1] + 1) - len(status_bar_text) - 1))
@@ -140,6 +140,7 @@ def play_gol(stdscr, shape_name, display_area):
   global default_timer
   global num_of_evolutions  
   continue_evolution = True
+  paused = False
   
   while True:
     key = stdscr.getch()
@@ -165,7 +166,12 @@ def play_gol(stdscr, shape_name, display_area):
       default_timer /= 2
     elif key == curses.KEY_DOWN:
       default_timer *= 2
-      pass
+    elif key == curses.ascii.SP:
+      paused = not paused
+      if paused:
+        stdscr.nodelay(0) # reset "getch" to block
+      else:
+        stdscr.nodelay(1) # instruct "getch" to not block
     
     stdscr.refresh()
 
