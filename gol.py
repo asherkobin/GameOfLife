@@ -119,13 +119,20 @@ def print_edit_ui(stdscr, display_area):
   rectangle(stdscr, display_area[0][0], display_area[0][1], display_area[1][0], display_area[1][1])
 
   # status bar
-  status_bar_text = " Use ARROW keys to Move | Press SPACE to Add Cell"
+  status_bar_text = " Use ARROW keys to Move | Press SPACE to Add Cell | BACKSPACE to Clear"
   stdscr.attron(curses.color_pair(1))
   stdscr.addstr(display_area[1][0] + 1, 0, status_bar_text)
   stdscr.addstr(display_area[1][0] + 1, 0 + len(status_bar_text), " " * ((display_area[1][1] + 1) - len(status_bar_text) - 1))
   stdscr.attroff(curses.color_pair(1))
 
 def play_gol(stdscr, shape_name, display_area):
+  global default_timer
+  global num_of_evolutions
+  continue_evolution = True
+  paused = False
+  default_timer = 0.01
+  num_of_evolutions = 0
+
   cell_matrix = CellMatrix(display_area[1][0], display_area[1][1])
 
   setup_initial_pattern(cell_matrix, shape_name, display_area)
@@ -136,28 +143,23 @@ def play_gol(stdscr, shape_name, display_area):
   stdscr.refresh()
   
   stdscr.nodelay(1) # instruct "getch" to not block
-
-  global default_timer
-  global num_of_evolutions  
-  continue_evolution = True
-  paused = False
   
+  fps = 0.0
   while True:
+    start_time = time.time()
     key = stdscr.getch()
 
-    time.sleep(default_timer)
+    #time.sleep(default_timer)
 
     if continue_evolution:
-      next_genration = cell_matrix.evolve()
+      cell_matrix = cell_matrix.evolve()
 
     num_of_evolutions += 1
     
-    stdscr.clear()    
+    stdscr.clear()
     
     print_display_ui(stdscr, display_area)
-    continue_evolution = print_matrix(stdscr, next_genration, display_area)
-    
-    cell_matrix = next_genration
+    continue_evolution = print_matrix(stdscr, cell_matrix, display_area)
 
     if key == curses.ascii.ESC:
       stdscr.nodelay(0) # reset "getch" to block
@@ -173,9 +175,15 @@ def play_gol(stdscr, shape_name, display_area):
       else:
         stdscr.nodelay(1) # instruct "getch" to not block
     
+    stdscr.addstr(0, 0, f"FPS: {fps}")
     stdscr.refresh()
+    time_taken = time.time() - start_time
+    fps = 1 / time_taken
 
 def make_matrix_from_coords(cell_coordinate_sets):
+  if len(cell_coordinate_sets) == 0:
+    return None
+  
   min_row, min_col = cell_coordinate_sets[0]
   max_row, max_col = cell_coordinate_sets[0]
 
@@ -286,8 +294,11 @@ def start_pattern_creation(stdscr, display_area): # Edit Mode
   global custom_idx
   new_pattern_name = new_pattern_name + " " + str(custom_idx)
   new_pattern_matrix = make_matrix_from_coords(cell_coordinate_sets)
-  predefined_patterns[new_pattern_name] = new_pattern_matrix
-  custom_idx += 1
+  if new_pattern_matrix != None:
+    predefined_patterns[new_pattern_name] = new_pattern_matrix
+    custom_idx += 1
+  else:
+    new_pattern_name = None
   
   return new_pattern_name
 
@@ -370,7 +381,8 @@ def setup_gol(stdscr):
         break
       elif menu[menu_idx] == "Custom Pattern":
         new_pattern_name = start_pattern_creation(stdscr, display_area) # Edit Mode
-        menu.insert(len(menu) - 1, new_pattern_name)
+        if new_pattern_name != None:
+          menu.insert(len(menu) - 1, new_pattern_name)
       elif menu[menu_idx] == "Random Pattern":
         play_gol(stdscr, menu[menu_idx], display_area)
       else:

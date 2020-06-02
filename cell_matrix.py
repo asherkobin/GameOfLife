@@ -82,6 +82,9 @@ class CellMatrix():
       for col_idx in range(self.num_cols):
 
         cell_unit = self.matrix[row_idx][col_idx]
+
+        #if cell_unit.get_state() is CellState.ALIVE:
+        #  new_cell_matrix.update_cell_unit(row_idx, col_idx, CellState.ALIVE)
         
         if cell_unit.get_state() is CellState.ALIVE:
           if cell_unit.get_neighbor_count() not in [2, 3]:
@@ -92,7 +95,5 @@ class CellMatrix():
         elif cell_unit.get_state() is CellState.DEAD:
           if cell_unit.get_neighbor_count() == 3:
             new_cell_matrix.update_cell_unit(row_idx, col_idx, CellState.ALIVE)
-          else:
-            new_cell_matrix.update_cell_unit(row_idx, col_idx, CellState.DEAD)
           
     return new_cell_matrix

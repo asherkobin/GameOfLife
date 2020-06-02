@@ -20,10 +20,14 @@ else if C is dead
 
 BUGS:
 - Bounds on EDIT
-- Menu Ordering after EDIT
+- Menu Ordering after EDIT - Fixed
 - EDIT curosr not big enough
+- Generations does not reset
+- Edge coditons on evolve
 
 TODO:
-- Count generations
-- Color particles based on age
+- Count generations - Done
+- Color particles based on age - Done
 - Create background grid
+- Edit TOGGLE
+- Text on Home Page
