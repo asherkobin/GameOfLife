@@ -31,3 +31,4 @@ TODO:
 - Create background grid
 - Edit TOGGLE
 - Text on Home Page
+- Matrix off-screen or wrap
