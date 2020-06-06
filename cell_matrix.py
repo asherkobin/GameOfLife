@@ -2,6 +2,8 @@ from cell_state import CellState
 from cell_unit import CellUnit
 from cell_matrix_navigator import CellMatrixNavigator
 from cell_neighbor_counter import CellNeighborCounter
+import random
+from itertools import product
 
 class CellMatrix():
   def __init__(self, height = 15, width = 15):
@@ -68,6 +70,88 @@ class CellMatrix():
       ret_string = ret_string[:-2]
       ret_string += "\n"
     return ret_string
+    
+  def update_neighbor_count_alt(self):
+    def get(r, c):
+        return 0 <= r < len(self.matrix) and 0 <= c < len(self.matrix[r]) and self.matrix[r][c]
+    return sum(get(r + i, c + j) for i, j in product(range(-1, 2), 2) if i or j)
+
+  def update_neighbor_count_fake_it(self):
+    for row_idx in range(self.num_rows):
+      for col_idx in range(self.num_cols):
+        current_cell = self.matrix[row_idx][col_idx]
+
+        current_cell.__num_neighbors__ = 2
+
+        x = random.randint(1, 50)
+        if x == 2:
+          current_cell.__num_neighbors__ = 3
+        elif x in [3, 4]:
+          current_cell.__num_neighbors__ = 2
+        elif x in [5, 6]:
+          current_cell.__num_neighbors__ = 1
+        else:
+          current_cell.__num_neighbors__ = 0
+
+  def update_neighbor_count_optimized(self):
+    for row_idx in range(self.num_rows):
+      for col_idx in range(self.num_cols):
+        current_cell = self.matrix[row_idx][col_idx]
+        
+        if row_idx > 0:
+          north_cell = self.matrix[row_idx - 1][col_idx]
+          if north_cell.get_state() == CellState.ALIVE:
+            current_cell.add_neighbor()
+        
+        if row_idx < self.num_rows - 1:
+          south_cell = self.matrix[row_idx + 1][col_idx]
+          if south_cell.get_state() == CellState.ALIVE:
+            current_cell.add_neighbor()
+        
+        if col_idx < self.num_cols - 1:
+          east_cell = self.matrix[row_idx][col_idx + 1]
+          if east_cell.get_state() == CellState.ALIVE:
+            current_cell.add_neighbor()
+
+        if current_cell.__num_neighbors__ > 3:
+          continue
+
+        if col_idx > 0:
+          west_cell = self.matrix[row_idx][col_idx - 1]
+          if west_cell.get_state() == CellState.ALIVE:
+            current_cell.add_neighbor()
+
+        if current_cell.__num_neighbors__ > 3:
+          continue
+
+        if row_idx > 0 and col_idx > 0:
+          north_west_cell = self.matrix[row_idx - 1][col_idx - 1]
+          if north_west_cell.get_state() == CellState.ALIVE:
+            current_cell.add_neighbor()
+
+        if current_cell.__num_neighbors__ > 3:
+          continue
+
+        if row_idx > 0 and col_idx < self.num_cols - 1:
+          north_east_cell = self.matrix[row_idx - 1][col_idx + 1]
+          if north_east_cell.get_state() == CellState.ALIVE:
+            current_cell.add_neighbor()
+
+        if current_cell.__num_neighbors__ > 3:
+          continue
+        
+        if row_idx < self.num_rows - 1 and col_idx > 0:
+          south_west_cell = self.matrix[row_idx + 1][col_idx - 1]
+          if south_west_cell.get_state() == CellState.ALIVE:
+            current_cell.add_neighbor()
+
+        if current_cell.__num_neighbors__ > 3:
+          continue
+        
+        if row_idx < self.num_rows - 1 and col_idx < self.num_cols - 1:
+          south_east_cell = self.matrix[row_idx + 1][col_idx + 1]
+          if south_east_cell.get_state() == CellState.ALIVE:
+            current_cell.add_neighbor()
 
   def update_neighbor_count(self):
     for row_idx in range(self.num_rows):
@@ -120,6 +204,9 @@ class CellMatrix():
     new_cell_matrix = CellMatrix(self.num_rows, self.num_cols)
 
     self.update_neighbor_count()
+    #self.update_neighbor_count_optimized()
+    #self.update_neighbor_count_fake_it()
+    # #self.update_neighbor_count_alt()
 
     for row_idx in range(self.num_rows):
       for col_idx in range(self.num_cols):

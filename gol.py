@@ -92,16 +92,19 @@ def print_matrix(stdscr, cell_matrix, display_area):
         
         #cell_char = char_chars[cell_unit.get_frame()]
         #cell_char = char_chars[random.randint(0, 3)]
+        # x = random.randint(1,20)
+        # if x == 5:
+        #   cell_unit.set_state(CellState.ALIVE)
 
         if cell_unit.get_state() == CellState.ALIVE:
           stdscr.attron(curses.color_pair(20))
           stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
           stdscr.attroff(curses.color_pair(20))
           drew_cell = True
-        else:
-          stdscr.attron(curses.color_pair(30))
-          stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
-          stdscr.attroff(curses.color_pair(30))
+        # else:
+        #   stdscr.attron(curses.color_pair(30))
+        #   stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+        #   stdscr.attroff(curses.color_pair(30))
         
         # if cell_unit.get_state() == CellState.ALIVE:
         #   if cell_unit.get_age() > 200:
@@ -134,7 +137,7 @@ def print_matrix(stdscr, cell_matrix, display_area):
         #   stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
         #   stdscr.attroff(curses.color_pair(10))
 
-  return drew_cell
+  return True
 
 def print_display_ui(stdscr, display_area):
   # display rectangle
@@ -173,19 +176,19 @@ def play_gol(stdscr, shape_name, display_area):
 
   setup_initial_pattern(cell_matrix, shape_name, display_area)
 
-  print_display_ui(stdscr, display_area)
+  #print_display_ui(stdscr, display_area)
   print_matrix(stdscr, cell_matrix, display_area)
 
   stdscr.refresh()
   
-  time.sleep(1)
+  #time.sleep(1)
   stdscr.nodelay(1) # instruct "getch" to not block
 
   while True:
     start_time = time.time()
     key = stdscr.getch()
 
-    time.sleep(refresh_timer)
+    #time.sleep(1)
 
     if continue_evolution:
       cell_matrix = cell_matrix.evolve()
@@ -196,7 +199,7 @@ def play_gol(stdscr, shape_name, display_area):
     
     stdscr.erase()
     
-    print_display_ui(stdscr, display_area)
+    #print_display_ui(stdscr, display_area)
     continue_evolution = print_matrix(stdscr, cell_matrix, display_area)
 
     if key == curses.ascii.ESC:
@@ -414,6 +417,9 @@ def setup_gol(stdscr):
   display_area = [[0, 0], [screen_hight - 2, screen_width - 1]]
   all_cells_are_dead = False
   
+  play_gol(stdscr, "Random Pattern", display_area)
+
+  return
   # TODO: Display the rules and other interesting info
   
   print_menu(stdscr, menu_idx, display_area, all_cells_are_dead)

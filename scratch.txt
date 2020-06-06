@@ -1,0 +1,11 @@
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      174    5.945    0.034    7.018    0.040 cell_matrix.py:90(update_neighbor_count_optimized)
+      207    6.843    0.033    8.073    0.039 cell_matrix.py:90(update_neighbor_count_optimized)
+      182    6.381    0.035    7.570    0.042 cell_matrix.py:90(update_neighbor_count_optimized)
+      365   12.314    0.034   14.641    0.040 cell_matrix.py:90(update_neighbor_count_optimized)
+      
+      287    8.976    0.031   10.621    0.037 cell_matrix.py:150(update_neighbor_count)
+      347   11.043    0.032   13.017    0.038 cell_matrix.py:150(update_neighbor_count)
+      350   11.325    0.032   13.396    0.038 cell_matrix.py:150(update_neighbor_count)
+      381   12.307    0.032   14.657    0.038 cell_matrix.py:150(update_neighbor_count)      
+      
