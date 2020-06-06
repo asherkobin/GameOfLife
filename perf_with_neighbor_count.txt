@@ -1,64 +1,85 @@
-ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-        1    0.000    0.000    6.350    6.350 <string>:1(<module>)
-        1    0.000    0.000    0.002    0.002 __init__.py:25(initscr)
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      280    9.529    0.034   11.325    0.040 cell_matrix.py:156(update_neighbor_count)         
+         
+         33049648 function calls in 26.203 seconds
+
+   Ordered by: standard name
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   27.291   27.291 <string>:1(<module>)
+        1    0.000    0.000    0.001    0.001 __init__.py:25(initscr)
         1    0.000    0.000    0.000    0.000 __init__.py:42(start_color)
-        1    0.000    0.000    6.350    6.350 __init__.py:63(wrapper)
+        1    0.000    0.000   27.291   27.291 __init__.py:63(wrapper)
         1    0.000    0.000    0.000    0.000 _collections_abc.py:657(get)
         1    0.000    0.000    0.000    0.000 _collections_abc.py:664(__contains__)
-       94    0.011    0.000    0.765    0.008 cell_matrix.py:11(<listcomp>)
-       93    0.232    0.002    6.309    0.068 cell_matrix.py:120(evolve)
-        9    0.000    0.000    0.000    0.000 cell_matrix.py:18(update_cell_unit)
-        9    0.000    0.000    0.000    0.000 cell_matrix.py:25(get_cell_unit)
-       93    3.753    0.040    5.143    0.055 cell_matrix.py:73(update_neighbor_count)
-       94    0.001    0.000    0.767    0.008 cell_matrix.py:8(__init__)
-       94    0.000    0.000    0.000    0.000 cell_matrix_navigator.py:4(__init__)
-       94    0.000    0.000    0.000    0.000 cell_neighbor_counter.py:4(__init__)
-  4515616    0.870    0.000    0.870    0.000 cell_unit.py:10(add_neighbor)
-  4564626    0.520    0.000    0.520    0.000 cell_unit.py:16(get_state)
-   584979    0.131    0.000    0.174    0.000 cell_unit.py:19(set_state)
-        9    0.000    0.000    0.000    0.000 cell_unit.py:27(set_age)
-        9    0.000    0.000    0.000    0.000 cell_unit.py:38(set_frame)
-   591260    0.373    0.000    0.373    0.000 cell_unit.py:4(__init__)
-       94    0.000    0.000    0.000    0.000 gol.py:140(print_display_ui)
-        1    0.002    0.002    6.348    6.348 gol.py:165(play_gol)
-        1    0.000    0.000    6.348    6.348 gol.py:394(setup_gol)
-        1    0.000    0.000    0.000    0.000 gol.py:45(setup_initial_pattern)
-        1    0.000    0.000    6.350    6.350 gol.py:461(main)
-       94    0.000    0.000    0.001    0.000 gol.py:69(print_matrix)
+      281    0.016    0.000    2.366    0.008 cell_matrix.py:12(<listcomp>)
+      280    9.529    0.034   11.325    0.040 cell_matrix.py:156(update_neighbor_count)
+   120849    0.142    0.000    0.290    0.000 cell_matrix.py:19(update_cell_unit)
+      280    2.408    0.009   17.054    0.061 cell_matrix.py:203(evolve)
+   120849    0.030    0.000    0.030    0.000 cell_matrix.py:26(get_cell_unit)
+      281    0.004    0.000    2.370    0.008 cell_matrix.py:9(__init__)
+      281    0.000    0.000    0.000    0.000 cell_matrix_navigator.py:4(__init__)
+      281    0.000    0.000    0.000    0.000 cell_neighbor_counter.py:4(__init__)
+   705405    0.167    0.000    0.167    0.000 cell_unit.py:10(add_neighbor)
+  1799280    0.225    0.000    0.225    0.000 cell_unit.py:13(get_neighbor_count)
+ 19191035    2.274    0.000    2.274    0.000 cell_unit.py:16(get_state)
+   120849    0.039    0.000    0.051    0.000 cell_unit.py:19(set_state)
+    57837    0.008    0.000    0.008    0.000 cell_unit.py:24(get_age)
+   120849    0.046    0.000    0.046    0.000 cell_unit.py:27(set_age)
+    57837    0.008    0.000    0.008    0.000 cell_unit.py:35(get_frame)
+   120849    0.020    0.000    0.020    0.000 cell_unit.py:38(set_frame)
+  1805706    1.262    0.000    1.262    0.000 cell_unit.py:4(__init__)
+        1    0.015    0.015   27.284   27.284 gol.py:167(play_gol)
+        1    0.000    0.000   27.284   27.284 gol.py:434(setup_gol)
+        1    0.002    0.002    0.015    0.015 gol.py:45(setup_initial_pattern)
+        1    0.000    0.000    0.001    0.001 gol.py:49(<listcomp>)
+        1    0.000    0.000   27.291   27.291 gol.py:500(main)
+      281    2.808    0.010    4.532    0.016 gol.py:69(print_matrix)
         3    0.000    0.000    0.000    0.000 os.py:670(__getitem__)
         1    0.000    0.000    0.000    0.000 os.py:678(__setitem__)
         1    0.000    0.000    0.000    0.000 os.py:710(setdefault)
         5    0.000    0.000    0.000    0.000 os.py:748(encode)
         2    0.000    0.000    0.000    0.000 os.py:752(decode)
+     6426    0.004    0.000    0.008    0.000 random.py:200(randrange)
+     6426    0.002    0.000    0.010    0.000 random.py:244(randint)
+     6426    0.003    0.000    0.005    0.000 random.py:250(_randbelow_with_getrandbits)
         1    0.000    0.000    0.000    0.000 {built-in method _curses.cbreak}
+  3463044    0.361    0.000    0.361    0.000 {built-in method _curses.color_pair}
         1    0.000    0.000    0.000    0.000 {built-in method _curses.curs_set}
         1    0.000    0.000    0.000    0.000 {built-in method _curses.echo}
         1    0.000    0.000    0.000    0.000 {built-in method _curses.endwin}
         2    0.000    0.000    0.000    0.000 {built-in method _curses.init_color}
        11    0.000    0.000    0.000    0.000 {built-in method _curses.init_pair}
         1    0.001    0.001    0.001    0.001 {built-in method _curses.initscr}
-        1    0.000    0.000    0.000    0.000 {built-in method _curses.nocbreak}
+        1    0.005    0.005    0.005    0.005 {built-in method _curses.nocbreak}
         1    0.000    0.000    0.000    0.000 {built-in method _curses.noecho}
         1    0.000    0.000    0.000    0.000 {built-in method _curses.setupterm}
         1    0.000    0.000    0.000    0.000 {built-in method _curses.start_color}
-     1880    0.000    0.000    0.000    0.000 {built-in method builtins.chr}
-        1    0.000    0.000    6.350    6.350 {built-in method builtins.exec}
+     5620    0.001    0.000    0.001    0.000 {built-in method builtins.chr}
+        1    0.000    0.000   27.291   27.291 {built-in method builtins.exec}
         2    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
-   584984    0.042    0.000    0.042    0.000 {built-in method builtins.isinstance}
-        2    0.000    0.000    0.000    0.000 {built-in method builtins.len}
+   120854    0.012    0.000    0.012    0.000 {built-in method builtins.isinstance}
+      838    0.000    0.000    0.000    0.000 {built-in method builtins.len}
         1    0.000    0.000    0.000    0.000 {built-in method builtins.locals}
        45    0.000    0.000    0.000    0.000 {built-in method builtins.setattr}
+      838    0.004    0.000    0.004    0.000 {built-in method builtins.sum}
         1    0.000    0.000    0.000    0.000 {built-in method posix.putenv}
-      185    0.000    0.000    0.000    0.000 {built-in method time.time}
-       92    0.001    0.000    0.001    0.000 {method 'addstr' of '_curses.window' objects}
+     1679    0.002    0.000    0.002    0.000 {built-in method time.time}
+  1731801    0.759    0.000    0.759    0.000 {method 'addstr' of '_curses.window' objects}
+      838    0.000    0.000    0.000    0.000 {method 'append' of 'list' objects}
+  1731522    0.197    0.000    0.197    0.000 {method 'attroff' of '_curses.window' objects}
+  1731522    0.189    0.000    0.189    0.000 {method 'attron' of '_curses.window' objects}
+     6426    0.001    0.000    0.001    0.000 {method 'bit_length' of 'int' objects}
         2    0.000    0.000    0.000    0.000 {method 'decode' of 'bytes' objects}
         1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
         5    0.000    0.000    0.000    0.000 {method 'encode' of 'str' objects}
-       93    0.002    0.000    0.002    0.000 {method 'erase' of '_curses.window' objects}
+      280    0.005    0.000    0.005    0.000 {method 'erase' of '_curses.window' objects}
         1    0.000    0.000    0.000    0.000 {method 'fileno' of '_io.TextIOWrapper' objects}
-       93    0.000    0.000    0.000    0.000 {method 'getch' of '_curses.window' objects}
+      838    0.006    0.000    0.006    0.000 {method 'format' of 'str' objects}
+      280    0.003    0.000    0.003    0.000 {method 'getch' of '_curses.window' objects}
         1    0.000    0.000    0.000    0.000 {method 'getmaxyx' of '_curses.window' objects}
+    10290    0.001    0.000    0.001    0.000 {method 'getrandbits' of '_random.Random' objects}
         1    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}
         2    0.000    0.000    0.000    0.000 {method 'keypad' of '_curses.window' objects}
         2    0.000    0.000    0.000    0.000 {method 'nodelay' of '_curses.window' objects}
-       93    0.026    0.000    0.026    0.000 {method 'refresh' of '_curses.window' objects}
+      280    5.639    0.020    5.639    0.020 {method 'refresh' of '_curses.window' objects}

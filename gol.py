@@ -90,8 +90,8 @@ def print_matrix(stdscr, cell_matrix, display_area):
     for col_idx, cell_unit in enumerate(row):
       if col_idx < display_area[1][1] - 1 and row_idx < display_area[1][0] - 1:
         
-        #cell_char = char_chars[cell_unit.get_frame()]
-        #cell_char = char_chars[random.randint(0, 3)]
+        # cell_char = char_chars[cell_unit.get_frame()]
+        # cell_char = char_chars[random.randint(0, 3)]
         # x = random.randint(1,20)
         # if x == 5:
         #   cell_unit.set_state(CellState.ALIVE)
@@ -101,10 +101,10 @@ def print_matrix(stdscr, cell_matrix, display_area):
           stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
           stdscr.attroff(curses.color_pair(20))
           drew_cell = True
-        # else:
-        #   stdscr.attron(curses.color_pair(30))
-        #   stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
-        #   stdscr.attroff(curses.color_pair(30))
+        else:
+          stdscr.attron(curses.color_pair(30))
+          stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+          stdscr.attroff(curses.color_pair(30))
         
         # if cell_unit.get_state() == CellState.ALIVE:
         #   if cell_unit.get_age() > 200:
@@ -137,7 +137,8 @@ def print_matrix(stdscr, cell_matrix, display_area):
         #   stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
         #   stdscr.attroff(curses.color_pair(10))
 
-  return True
+        #continue
+  return drew_cell
 
 def print_display_ui(stdscr, display_area):
   # display rectangle
@@ -164,13 +165,21 @@ def print_edit_ui(stdscr, display_area):
   stdscr.attroff(curses.color_pair(1))
 
 def play_gol(stdscr, shape_name, display_area):
+  
   global refresh_timer
   global num_of_evolutions
   continue_evolution = True
   paused = False
   num_of_evolutions = 0
-  fps = 0.0
   refresh_timer = refresh_timer_default
+  
+  # Performance Counters
+  frames_per_sec = 0.0
+  frames_per_sec_array = []
+  display_updates_sec = 0.0
+  display_updates_sec_array = []
+  evolution_time_independant_of_grid_size = 0.0
+  evolution_time_independant_of_grid_size_array = []
 
   cell_matrix = CellMatrix(display_area[1][0], display_area[1][1])
 
@@ -184,14 +193,22 @@ def play_gol(stdscr, shape_name, display_area):
   #time.sleep(1)
   stdscr.nodelay(1) # instruct "getch" to not block
 
+  grid_size = display_area[1][1] * display_area[1][0]
+
   while True:
-    start_time = time.time()
+    frame_start_time = time.time()
     key = stdscr.getch()
 
     #time.sleep(1)
 
     if continue_evolution:
+      start_time_evolution = time.time()
       cell_matrix = cell_matrix.evolve()
+      evolution_time_taken = time.time() - start_time_evolution
+      evolution_time_independant_of_grid_size = evolution_time_taken / grid_size
+      evolution_time_independant_of_grid_size_array.append(evolution_time_independant_of_grid_size)
+      evolution_time_independant_of_grid_size = sum(evolution_time_independant_of_grid_size_array) / len(evolution_time_independant_of_grid_size_array)
+      evolution_time_independant_of_grid_size = "{:.2e}".format(evolution_time_independant_of_grid_size)
     else:
       break
 
@@ -200,8 +217,11 @@ def play_gol(stdscr, shape_name, display_area):
     stdscr.erase()
     
     #print_display_ui(stdscr, display_area)
-    continue_evolution = print_matrix(stdscr, cell_matrix, display_area)
 
+    display_start_time = time.time()
+    continue_evolution = print_matrix(stdscr, cell_matrix, display_area)
+    display_time_taken = time.time() - display_start_time
+    
     if key == curses.ascii.ESC:
       stdscr.nodelay(0) # reset "getch" to block
       break
@@ -215,11 +235,30 @@ def play_gol(stdscr, shape_name, display_area):
         stdscr.nodelay(0) # reset "getch" to block
       else:
         stdscr.nodelay(1) # instruct "getch" to not block
+
+###################
+###################    
+
     
-    stdscr.addstr(0, 0, f"FPS: {fps}")
+    
+    stdscr.addstr(0, 0, 
+      f"Rows: {display_area[1][1]} Cols: {display_area[1][0]} Cells: {grid_size}\
+        ETi: {evolution_time_independant_of_grid_size} DPS: {display_updates_sec} FPS: {frames_per_sec}")
+    
+    
     stdscr.refresh()
-    time_taken = time.time() - start_time
-    fps = 1 / time_taken
+
+    frame_time_taken = time.time() - frame_start_time
+    frames_per_sec = 1 / frame_time_taken
+    frames_per_sec_array.append(frames_per_sec)
+    frames_per_sec = sum(frames_per_sec_array) / len(frames_per_sec_array)
+    frames_per_sec = "{:.2f}".format(frames_per_sec)
+    
+    display_updates_sec = 1 / display_time_taken
+    display_updates_sec_array.append(display_updates_sec)
+    display_updates_sec = sum(display_updates_sec_array) / len(display_updates_sec_array)
+    display_updates_sec = "{:.2f}".format(display_updates_sec)
+    
 
 def make_matrix_from_coords(cell_coordinate_sets):
   if len(cell_coordinate_sets) == 0:
