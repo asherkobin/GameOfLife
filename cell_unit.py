@@ -1,7 +1,7 @@
-from cell_state import CellState
+#from cell_state import CellState
 
 class CellUnit():
-  def __init__(self, cell_state = CellState.DEAD, cell_age = 0):
+  def __init__(self, cell_state = False, cell_age = 0):
     self.state = cell_state
     self.num_neighbors = 0
     self.age = cell_age
