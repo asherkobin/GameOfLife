@@ -83,7 +83,7 @@ def print_matrix(stdscr, cell_matrix, display_area):
   cell_char_block = u"\u25FC"
   cell_char_star = "*"
 
-  use_frames = True
+  use_frames = False
   
   cell_char = cell_char_block
   char_chars_animation = char_chars_letters
@@ -132,7 +132,7 @@ def print_display_ui(stdscr, display_area, interval_speed, num_of_evolutions):
   status_bar_text = f" Press ESC to Quit | Use ARROW UP or ARROW DOWN to Change Speed | SPACE to Pause (Any KEY for One Evolution) | Interval: {interval_speed} | Generations: {num_of_evolutions}"
   stdscr.attron(curses.color_pair(1))
   stdscr.addstr(display_area[1][0] + 1, 0, status_bar_text)
-  stdscr.addstr(display_area[1][0] + 1, 0 + len(status_bar_text), " " * ((display_area[1][1] + 1) - len(status_bar_text) - 1))
+  stdscr.insstr(display_area[1][0] + 1, 0 + len(status_bar_text), " " * ((display_area[1][1] + 2) - len(status_bar_text) - 1))
   stdscr.attroff(curses.color_pair(1))
 
 def print_edit_ui(stdscr, display_area):
@@ -143,7 +143,7 @@ def print_edit_ui(stdscr, display_area):
   status_bar_text = " Use ARROW keys to Move | Press SPACE to toggle Cell | Press ESC to Save | Press BACKSPACE to Discard"
   stdscr.attron(curses.color_pair(1))
   stdscr.addstr(display_area[1][0] + 1, 0, status_bar_text)
-  stdscr.addstr(display_area[1][0] + 1, 0 + len(status_bar_text), " " * ((display_area[1][1] + 1) - len(status_bar_text) - 1))
+  stdscr.insstr(display_area[1][0] + 1, 0 + len(status_bar_text), " " * ((display_area[1][1] + 2) - len(status_bar_text) - 1))
   stdscr.attroff(curses.color_pair(1))
 
 def play_gol(stdscr, shape_name, display_area):
@@ -377,9 +377,9 @@ def print_menu(stdscr, selected_menu_idx, display_area, all_cells_are_dead):
   stdscr.attron(curses.color_pair(3) | curses.A_BOLD)
   stdscr.addstr(y, welcome_x, welcome_msg)
   stdscr.attroff(curses.color_pair(3) | curses.A_BOLD)
-  stdscr.attron(curses.color_pair(3))
+  stdscr.attron(curses.color_pair(4))
   stdscr.addstr(y + 2, author_x, author_msg)
-  stdscr.attroff(curses.color_pair(3))
+  stdscr.attroff(curses.color_pair(4))
   
   for idx, menu_item in enumerate(get_menu_choces()):
     x = w // 2 - len(menu_item) // 2
@@ -402,7 +402,7 @@ def print_menu(stdscr, selected_menu_idx, display_area, all_cells_are_dead):
   status_bar_text = " Use ARROW keys to Select Pattern | Press ESC to Quit"
   stdscr.attron(curses.color_pair(1))
   stdscr.addstr(display_area[1][0] + 1, 0, status_bar_text)
-  stdscr.addstr(display_area[1][0] + 1, 0 + len(status_bar_text), " " * ((display_area[1][1] + 1) - len(status_bar_text) - 1))
+  stdscr.insstr(display_area[1][0] + 1, 0 + len(status_bar_text), " " * ((display_area[1][1] + 2) - len(status_bar_text) - 1))
   stdscr.attroff(curses.color_pair(1))
 
   stdscr.refresh()
