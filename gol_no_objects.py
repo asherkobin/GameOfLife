@@ -3,9 +3,7 @@ import time
 import curses
 import random
 from curses.textpad import rectangle
-from cell_matrix import CellMatrix
-from cell_unit import CellUnit
-from cell_state import CellState
+from cell_matrix_no_objects import CellMatrix
 
 predefined_patterns = {
   "Cross":
@@ -65,7 +63,7 @@ def setup_initial_pattern(cell_matrix, shape_name, display_area):
   for row_idx in range(design_width):
     for col_idx in range(design_height):
       if pattern_matrix[row_idx][col_idx] == 1:
-        cell_matrix.update_cell_unit(start_row + row_idx, start_col + col_idx, CellState.ALIVE)
+        cell_matrix.update_cell_unit(start_row + row_idx, start_col + col_idx, True)
 
 def print_matrix(stdscr, cell_matrix, display_area):
   cell_char_circle_with_dot = u"\u2609"
@@ -97,7 +95,7 @@ def print_matrix(stdscr, cell_matrix, display_area):
         # if x == 5:
         #   cell_unit.set_state(CellState.ALIVE)
 
-        if cell_unit.state == CellState.ALIVE:
+        if cell_unit == True:
           stdscr.attron(curses.color_pair(20))
           stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
           stdscr.attroff(curses.color_pair(20))
@@ -201,7 +199,7 @@ def play_gol(stdscr, shape_name, display_area):
     frame_start_time = time.time()
     key = stdscr.getch()
 
-    #time.sleep(0.125)
+    #time.sleep(1)
 
     if continue_evolution:
       start_time_evolution = time.time()
@@ -245,7 +243,7 @@ def play_gol(stdscr, shape_name, display_area):
     
     stdscr.addstr(0, 0, 
       f"Rows: {display_area[1][1]} Cols: {display_area[1][0]} Cells: {grid_size}\
-        ETi: {evolution_time_independant_of_grid_size} DPS: {display_updates_sec} FPS: {frames_per_sec}")
+        ETi: {evolution_time_independant_of_grid_size} DUPS: {display_updates_sec} FPS: {frames_per_sec}")
     
     
     stdscr.refresh()
