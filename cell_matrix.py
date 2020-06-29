@@ -25,43 +25,123 @@ class CellMatrix():
   def get_neighbor_count(self, row_idx, col_idx):
     n_count = 0
 
+    # North
+    
     if row_idx > 0:
       north_cell = self.matrix[row_idx - 1][col_idx]
       if north_cell:
         n_count += 1
+    else:
+      north_cell = self.matrix[self.num_rows - 1][col_idx]
+      if north_cell:
+        n_count += 1
     
+    # South
+
     if row_idx < self.num_rows - 1:
       south_cell = self.matrix[row_idx + 1][col_idx]
       if south_cell:
         n_count += 1
+    else:
+      south_cell = self.matrix[0][col_idx]
+      if south_cell:
+        n_count += 1
     
+    # East
+
     if col_idx < self.num_cols - 1:
       east_cell = self.matrix[row_idx][col_idx + 1]
       if east_cell:
         n_count += 1
+    else:
+      east_cell = self.matrix[row_idx][0]
+      if east_cell:
+        n_count += 1
+
+    # West
 
     if col_idx > 0:
       west_cell = self.matrix[row_idx][col_idx - 1]
       if west_cell:
         n_count += 1
+    else:
+      west_cell = self.matrix[row_idx][self.num_cols - 1]
+      if west_cell:
+        n_count += 1
 
+    # North West
+    
     if row_idx > 0 and col_idx > 0:
       north_west_cell = self.matrix[row_idx - 1][col_idx - 1]
       if north_west_cell:
         n_count += 1
+    elif row_idx == 0 and col_idx > 0:
+      north_west_cell = self.matrix[self.num_rows - 1][col_idx - 1]
+      if north_west_cell:
+        n_count += 1
+    elif row_idx > 0 and col_idx == 0:
+      north_west_cell = self.matrix[row_idx - 1][self.num_cols - 1]
+      if north_west_cell:
+        n_count += 1
+    elif row_idx == 0 and col_idx == 0:
+      north_west_cell = self.matrix[self.num_rows - 1][self.num_cols - 1]
+      if north_west_cell:
+        n_count += 1
+    
+    # North East
 
     if row_idx > 0 and col_idx < self.num_cols - 1:
       north_east_cell = self.matrix[row_idx - 1][col_idx + 1]
       if north_east_cell:
         n_count += 1
+    elif row_idx == 0 and col_idx < self.num_cols - 1:
+      north_east_cell = self.matrix[self.num_rows - 1][col_idx + 1]
+      if north_east_cell:
+        n_count += 1
+    elif row_idx > 0 and col_idx == self.num_cols - 1:
+      north_east_cell = self.matrix[row_idx - 1][0]
+      if north_east_cell:
+        n_count += 1
+    elif row_idx == 0 and col_idx == self.num_cols - 1:
+      north_east_cell = self.matrix[0][self.num_cols - 1]
+      if north_east_cell:
+        n_count += 1
     
+    # South West
+
     if row_idx < self.num_rows - 1 and col_idx > 0:
       south_west_cell = self.matrix[row_idx + 1][col_idx - 1]
       if south_west_cell:
         n_count += 1
+    elif row_idx == self.num_rows - 1 and col_idx > 0:
+      south_west_cell = self.matrix[0][col_idx - 1]
+      if south_west_cell:
+        n_count += 1
+    elif row_idx < self.num_rows - 1 and col_idx == 0:
+      south_west_cell = self.matrix[row_idx + 1][self.num_cols - 1]
+      if south_west_cell:
+        n_count += 1
+    elif row_idx == self.num_rows - 1 and col_idx == 0:
+      south_west_cell = self.matrix[0][self.num_cols - 1]
+      if south_west_cell:
+        n_count += 1
     
+    # South East
+
     if row_idx < self.num_rows - 1 and col_idx < self.num_cols - 1:
       south_east_cell = self.matrix[row_idx + 1][col_idx + 1]
+      if south_east_cell:
+        n_count += 1
+    elif row_idx == self.num_rows - 1 and col_idx < self.num_cols - 1:
+      south_east_cell = self.matrix[0][col_idx + 1]
+      if south_east_cell:
+        n_count += 1
+    elif row_idx < self.num_rows - 1 and col_idx == self.num_cols - 1:
+      south_east_cell = self.matrix[row_idx + 1][0]
+      if south_east_cell:
+        n_count += 1
+    elif row_idx == self.num_rows - 1 and col_idx == self.num_cols - 1:
+      south_east_cell = self.matrix[0][0]
       if south_east_cell:
         n_count += 1
     

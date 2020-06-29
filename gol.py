@@ -24,9 +24,13 @@ predefined_patterns = {
     [[0, 1, 0, 0, 0, 0, 0],
      [0, 0, 0, 1, 0, 0, 0],
      [1, 1, 0, 0, 1, 1, 1]],
-  "Glider":
+  "Glider - SW":
     [[0, 1, 0],
      [0, 0, 1],
+     [1, 1, 1]],
+  "Glider - SE":
+    [[0, 1, 0],
+     [1, 0, 0],
      [1, 1, 1]],
   "Line Goes Crazy":
     [[1, 1, 1, 1, 1, 0, 0, 1, 1, 1]]
@@ -41,8 +45,8 @@ def get_menu_choces():
 
 def setup_initial_pattern(cell_matrix, shape_name, display_area):
   if shape_name == "Random Pattern":
-    design_width = display_area[1][0]
-    design_height = display_area[1][1]
+    design_width = display_area[1][0] - 1
+    design_height = display_area[1][1] - 1
     pattern_matrix = [[0 for _ in range(design_height)] for _ in range(design_width)]
     for row_idx in range(design_width):
       for col_idx in range(design_height):
@@ -92,35 +96,39 @@ def print_matrix(stdscr, cell_matrix, display_area):
   
   for row_idx, row in enumerate(cell_matrix.matrix):
     for col_idx, cell_unit in enumerate(row):
-      if col_idx < display_area[1][1] - 1 and row_idx < display_area[1][0] - 1:
-        if cell_unit == True:
-          cell_state = cell_matrix.get_cell_state(row_idx, col_idx)
-          cell_age = cell_state.age
-          if use_frames:
-            cell_frame = cell_state.frame
-            cell_char = char_chars_animation[cell_frame]
+      if cell_unit == True:
+        stdscr.attron(curses.color_pair(4))
+        stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+        stdscr.attroff(curses.color_pair(4))
+        drew_cell = True
+      # if cell_unit == True:
+      #   cell_state = cell_matrix.get_cell_state(row_idx, col_idx)
+      #   cell_age = cell_state.age
+      #   if use_frames:
+      #     cell_frame = cell_state.frame
+      #     cell_char = char_chars_animation[cell_frame]
 
-          if cell_age > 200:
-            stdscr.attron(curses.color_pair(8))
-            stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
-            stdscr.attroff(curses.color_pair(8))
-          elif cell_age > 100:
-            stdscr.attron(curses.color_pair(7))
-            stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
-            stdscr.attroff(curses.color_pair(7))
-          elif cell_age > 20:
-            stdscr.attron(curses.color_pair(6))
-            stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
-            stdscr.attroff(curses.color_pair(6))
-          elif cell_age > 10:
-            stdscr.attron(curses.color_pair(5))
-            stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
-            stdscr.attroff(curses.color_pair(5))
-          else:
-            stdscr.attron(curses.color_pair(4))
-            stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
-            stdscr.attroff(curses.color_pair(4))
-          drew_cell = True
+      #   if cell_age > 200:
+      #     stdscr.attron(curses.color_pair(8))
+      #     stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+      #     stdscr.attroff(curses.color_pair(8))
+      #   elif cell_age > 100:
+      #     stdscr.attron(curses.color_pair(7))
+      #     stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+      #     stdscr.attroff(curses.color_pair(7))
+      #   elif cell_age > 20:
+      #     stdscr.attron(curses.color_pair(6))
+      #     stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+      #     stdscr.attroff(curses.color_pair(6))
+      #   elif cell_age > 10:
+      #     stdscr.attron(curses.color_pair(5))
+      #     stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+      #     stdscr.attroff(curses.color_pair(5))
+      #   else:
+      #     stdscr.attron(curses.color_pair(4))
+      #     stdscr.addstr(row_idx + 1, col_idx + 1, cell_char)
+      #     stdscr.attroff(curses.color_pair(4))
+      #   drew_cell = True
   
   return drew_cell
 
@@ -157,8 +165,8 @@ def play_gol(stdscr, shape_name, display_area):
   frames_per_sec = 0.0
   frames_per_sec_array = []
 
-  cell_matrix = CellMatrix(display_area[1][0], display_area[1][1])
-
+  cell_matrix = CellMatrix(display_area[1][0] - 1, display_area[1][1] - 1)
+ 
   setup_initial_pattern(cell_matrix, shape_name, display_area)
 
   print_display_ui(stdscr, display_area, current_delay, num_of_evolutions)
@@ -433,8 +441,8 @@ def setup_gol(stdscr):
   
   menu_idx = 0
   custom_pattern_menu_idx = 0
-  screen_hight, screen_width = stdscr.getmaxyx()
-  display_area = [[0, 0], [screen_hight - 2, screen_width - 1]]
+  screen_height, screen_width = stdscr.getmaxyx()
+  display_area = [[0, 0], [screen_height - 2, screen_width - 1]]
   all_cells_are_dead = False
   
   # TODO: display the rules and other interesting info
