@@ -26,9 +26,12 @@ BUGS:
 - Edge coditons on evolve
 
 TODO:
+- Make CLASSES !
 - Count generations - Done
 - Color particles based on age - Done
 - Create background grid
 - Edit TOGGLE
 - Text on Home Page
 - Matrix off-screen or wrap
+- Make menu dividers or Sub-menus
+- Get average distrubution of cell age to better represent color gradients
