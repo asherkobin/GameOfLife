@@ -32,16 +32,101 @@ class PatternHelper():
   def __init__(self, max_rows, max_cols):
     self.max_rows = max_rows
     self.max_cols = max_cols
-    self.starting_patterns = starting_patterns
+    self.patterns = starting_patterns
 
   def get_pattern_names(self):
-    return self.starting_patterns.keys()
+    return self.patterns.keys()
+
+  def get(self, name):
+    return self.patterns[name]
+
+  def add(self, name, pattern):
+    self.patterns[name] = pattern
 
 
-  def rle_to_matrix(self, rle_string):
-    pass
+  def rle_to_matrix(self, rle_string, max_rows, max_cols):
+    rle_lines = rle_string.splitlines()
+    rle_info_line = rle_lines[0]
+    rle_info_parts = rle_info_line.split(", ")
+    rle_info = {}
+
+    for rle_part in rle_info_parts:
+      name_value = rle_part.split(" = ")
+      rle_info[name_value[0]] = name_value[1]
+
+    num_rows = int(rle_info["y"])
+    num_cols = int(rle_info["x"])
+
+    if num_rows >= max_rows:
+      raise Exception(f"Height of {rle_info['y']} is too large")
+    
+    if num_cols >= max_cols:
+      raise Exception(f"Width of {rle_info['x']} is too large")
+
+    if rle_info["rule"] != "B3/S23":
+      raise Exception(f"Invalid format: {rle_info['rule']}")
+
+    rle_lines = rle_lines[1:]
+    rle_data = ""
+
+    for rle_line in rle_lines:
+      if rle_line[0] != "#":
+        rle_data += rle_line
+
+    matrix = [[0 for _ in range(num_cols)] for _ in range(num_rows)]
+
+    num_str = ""
+    num_int = None
+    row_num = 0
+    col_num = 0
+    i = 0
+
+    for i in range(len(rle_data)):
+      if rle_data[i].isnumeric():
+        num_str += rle_data[i]
+      else:
+        if num_str != "":
+          num_int = int(num_str)
+          num_str = ""
+        if rle_data[i] == "b": # dead
+          if num_int == None:
+            col_num += 1
+          else:
+            col_num += num_int
+            num_int = None
+        elif rle_data[i] == "o": # alive
+          if num_int == None:
+            matrix[row_num][col_num] = 1
+            col_num += 1
+          else:
+            while num_int > 0:
+              matrix[row_num][col_num] = 1
+              col_num += 1
+              num_int -= 1
+            num_int = None
+        elif rle_data[i] == "$":
+          if num_int == None:
+            row_num += 1
+          else:
+            row_num += num_int
+            num_int = None
+          col_num = 0
+        elif rle_data[i] == "!":
+          break
+
+    return matrix
   """
-  x = 14, y = 21, rule = B3/S23
-  3bo$2bobo$b2o$2bo$bobo$bo$o11bo$obo7b2obo$o4b2o3b2o$b4o4bo$5b2obo$b4o
-  4bo$o4b2o3b2o$obo7b2obo$o11bo$bo$bobo$2bo$b2o$2bobo$3bo!
+  x = 5, y = 18, rule = B3/S23
+  3bo$
+  4bo$
+  o3bo$
+  b4o4$
+  o$b2o$
+  2bo$
+  2bo$
+  bo3$
+  3bo$
+  4bo$
+  o3bo$
+  b4o!
   """

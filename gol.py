@@ -5,31 +5,34 @@ import random
 from curses.textpad import rectangle
 from cell_matrix import CellMatrix
 from curses_colors import ColorPair, CursesColorHelper
-from curses_helpers import ScreenText, PatternHelper, DisplayArea
-from starting_patterns import starting_patterns
+from curses_helpers import ScreenText, PatternHelper, DisplayArea, PatternHelper
   
 class GameOfLife():
   def __init__(self):
-    # intialize anything that doesn't need "stdscr"
     self.stdscr = None
     self.curses_color_helper = CursesColorHelper()
     self.screen_text = None
-    self.menu_choices = [key for key in starting_patterns.keys()]
     self.display_area = None
-
-    self.menu_choices.append("Random Pattern")
-    self.menu_choices.append("Custom Pattern")
+    self.pattern_helper = None
+    self.menu_choices = None
 
   def start(self):
     os.environ.setdefault("ESCDELAY", "0")
     curses.wrapper(self.curses_wrapper)
-
-  def curses_wrapper(self, stdscr):
+  
+  def curses_init(self, stdscr):
     self.stdscr = stdscr
     self.curses_color_helper.init_color_pairs()
     self.screen_text = ScreenText(stdscr)
     self.display_area = DisplayArea(0, 0, self.stdscr.getmaxyx()[0] - 2, self.stdscr.getmaxyx()[1] - 1)
-    
+    self.pattern_helper = PatternHelper(self.display_area.get_num_rows(), self.display_area.get_num_cols())
+    self.menu_choices = [*self.pattern_helper.get_pattern_names()]
+    self.menu_choices.append("Random Pattern")
+    self.menu_choices.append("Custom Pattern")
+
+  def curses_wrapper(self, stdscr):
+    self.curses_init(stdscr)
+
     # hide cursor
     curses.curs_set(0)
     
@@ -216,8 +219,8 @@ class GameOfLife():
 
     time.sleep(2)
 
-  def load_pattern(self, shape_name, cell_matrix):
-    if shape_name == "Random Pattern":
+  def load_pattern(self, pattern_name, cell_matrix):
+    if pattern_name == "Random Pattern":
 
       # create a pattern matix that will fill up the cell matrix based on living cell density
       
@@ -241,7 +244,7 @@ class GameOfLife():
 
       # load a predefined pattern
       
-      pattern_matrix = starting_patterns[shape_name]
+      pattern_matrix = self.pattern_helper.get(pattern_name)
       
       design_rows = len(pattern_matrix)
       design_cols = len(pattern_matrix[0])
@@ -324,8 +327,10 @@ class GameOfLife():
 
   def start_pattern_creation(self, custom_pattern_menu_idx):
     new_pattern_name = "User Generated"
-    cursor_row = self.display_area.get_num_rows() // 2 
-    cursor_col = self.display_area.get_num_cols() // 2
+    num_rows = self.display_area.get_num_rows()
+    num_cols = self.display_area.get_num_cols()
+    cursor_row = num_rows // 2 
+    cursor_col = num_cols // 2
     prev_cursor_row = cursor_row
     prev_cursor_col = cursor_col
     cursor_char_on = u"\u258A" # block
@@ -352,17 +357,21 @@ class GameOfLife():
       prev_cursor_row = cursor_row
 
       if key == curses.KEY_UP:
-        cursor_row -= 1
-        cursor_moved = True
+        if cursor_row > 1:
+          cursor_row -= 1
+          cursor_moved = True
       elif key == curses.KEY_DOWN:
-        cursor_row += 1
-        cursor_moved = True
+        if cursor_row < num_rows - 1:
+          cursor_row += 1
+          cursor_moved = True
       elif key == curses.KEY_LEFT:
-        cursor_col -= 1
-        cursor_moved = True
+        if cursor_col > 1:
+          cursor_col -= 1
+          cursor_moved = True
       elif key == curses.KEY_RIGHT:
-        cursor_col += 1
-        cursor_moved = True
+        if cursor_col < num_cols - 1:
+          cursor_col += 1
+          cursor_moved = True
       elif key == curses.ascii.SP:
         add_remove_cell = True
         cursor_was_on_cell = True
@@ -374,6 +383,13 @@ class GameOfLife():
       elif key == 115: # 's'
         self.save_pattern(cell_coordinate_list)
         ignore_key_press = True
+      elif key == 108: # 'l'
+        matrix = self.load_rle_file()
+        for row_idx in range(len(matrix)):
+          for col_idx in range(len(matrix[0])):
+            if matrix[row_idx][col_idx] == 1:
+              cell_coordinate_list.append((row_idx + 1, col_idx + 1))
+              self.screen_text.print(cell_char, ColorPair.WHITE_ON_BLACK, row_idx + 1, col_idx + 1)
       else:
         ignore_key_press = True
 
@@ -420,7 +436,7 @@ class GameOfLife():
       new_pattern_name = new_pattern_name + " " + str(custom_pattern_menu_idx)
       new_pattern_matrix = self.make_matrix_from_coords(cell_coordinate_list)
       if new_pattern_matrix != None:
-        starting_patterns[new_pattern_name] = new_pattern_matrix
+        self.pattern_helper.add(new_pattern_name, new_pattern_matrix)
       else:
         new_pattern_name = None
     
@@ -435,7 +451,7 @@ class GameOfLife():
       self.display_area.max_col_idx)
 
     # status bar
-    status_bar_text = " Use ARROW keys to Move | Press SPACE to toggle Cell | Press ENTER to Save | Press ESC to Discard"
+    status_bar_text = " Use ARROW keys to Move | Press SPACE to toggle Cell | Press ENTER to Save | Press ESC to Discard | Press L to Load RLE File"
     self.screen_text.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, 0)
     status_bar_padding = " " * ((self.display_area.max_col_idx + 2) - len(status_bar_text) - 1)
     self.screen_text.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, len(status_bar_text))
@@ -479,6 +495,13 @@ class GameOfLife():
     for row in pattern_matrix:
       pattern_file.write(str(row) + "\n")
     pattern_file.close()
+
+  def load_rle_file(self):
+    s = "x = 5, y = 18, rule = B3/S23\n3bo$4bo$o3bo$b4o4$o$b2o$2bo$2bo$bo3$3bo$4bo$o3bo$b4o!"
+    s = "x = 76, y = 59, rule = B3/S23\n12bo$13b2o$12b2o2$5bo$3bobo4bo$4b2o5b2o$10b2o2$3bo$bobo$2b2o2$73bobo$73b2o$74bo11$30bo$31b2o$30b2o24$63b3o$63bo$64bo2$34b2o$35b2o$34bo!"
+    pattern = self.pattern_helper.rle_to_matrix(s, self.display_area.max_row_idx, self.display_area.max_col_idx)
+
+    return pattern
 
 if __name__ == "__main__":
   gol = GameOfLife()
