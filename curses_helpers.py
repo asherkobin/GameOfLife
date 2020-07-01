@@ -1,5 +1,7 @@
 import curses
 from starting_patterns import starting_patterns
+from curses_colors import ColorPair
+import time
 
 class DisplayArea():
   def __init__(self, start_row_idx, start_col_idx, max_row_idx, max_col_idx):
@@ -27,6 +29,34 @@ class ScreenText():
     self.stdscr.attron(curses.color_pair(color_pair))
     self.stdscr.insstr(row_idx, col_idx, string)
     self.stdscr.attroff(curses.color_pair(color_pair))
+
+  def rectangle(self, start_row, start_col, end_row, end_col, color_pair = ColorPair.WHITE_ON_BLACK):
+    self.stdscr.attron(curses.color_pair(color_pair))
+    self.stdscr.vline(start_row+1, start_col, curses.ACS_VLINE, end_row - start_row - 1)
+    self.stdscr.hline(start_row, start_col+1, curses.ACS_HLINE, end_col - start_col - 1)
+    self.stdscr.hline(end_row, start_col+1, curses.ACS_HLINE, end_col - start_col - 1)
+    self.stdscr.vline(start_row+1, end_col, curses.ACS_VLINE, end_row - start_row - 1)
+    self.stdscr.addch(start_row, start_col, curses.ACS_ULCORNER)
+    self.stdscr.addch(start_row, end_col, curses.ACS_URCORNER)
+    self.stdscr.addch(end_row, end_col, curses.ACS_LRCORNER)
+    self.stdscr.addch(end_row, start_col, curses.ACS_LLCORNER)
+    self.stdscr.attroff(curses.color_pair(color_pair))
+
+  def modal_popup(self, text, display_area, delay_secs = 5):
+    text_row = display_area.max_row_idx // 2
+    text_col = display_area.max_col_idx // 2 - len(text) // 2
+
+    is_even = len(text) % 2 == 0
+
+    if is_even:
+      self.rectangle(text_row - 2, text_col - 2, text_row + 2, text_col + len(text) + 2)
+    else:
+      self.rectangle(text_row - 2, text_col - 3, text_row + 2, text_col + len(text) + 2)
+
+    self.print(text, ColorPair.CYAN_ON_BLACK, text_row, text_col)
+    self.stdscr.refresh()
+
+    time.sleep(delay_secs)
 
 class PatternHelper():
   def __init__(self, max_rows, max_cols):
@@ -115,18 +145,3 @@ class PatternHelper():
           break
 
     return matrix
-  """
-  x = 5, y = 18, rule = B3/S23
-  3bo$
-  4bo$
-  o3bo$
-  b4o4$
-  o$b2o$
-  2bo$
-  2bo$
-  bo3$
-  3bo$
-  4bo$
-  o3bo$
-  b4o!
-  """

@@ -6,7 +6,7 @@ class CellState():
     self.frame = frame
 
 class CellMatrix():
-  def __init__(self, height = 15, width = 15, wrap_around = True):
+  def __init__(self, height = 15, width = 15, wrap_around = False):
     self.num_rows = height
     self.num_cols = width
     self.matrix = [[False for _ in range(self.num_cols)] for _ in range(self.num_rows)]
@@ -24,7 +24,7 @@ class CellMatrix():
     return self.cell_state_map[(row_idx, col_idx)]
 
   def evolve(self):
-    new_cell_matrix = CellMatrix(self.num_rows, self.num_cols)
+    new_cell_matrix = CellMatrix(self.num_rows, self.num_cols, self.wrap_around)
 
     for row_idx in range(self.num_rows):
       for col_idx in range(self.num_cols):

@@ -2,9 +2,16 @@ import curses
 
 class ColorPair():
   WHITE_ON_BLACK      =   1
-  BLACK_ON_WHITE      =   2
-  GREEN_ON_BLACK      =   3
-  WHITE_ON_BLUE       =   4
+  GREEN_ON_BLACK      =   2
+  BLUE_ON_BLACK       =   3
+  YELLOW_ON_BLACK     =   4
+  RED_ON_BLACK        =   5
+  MAGENTA_ON_BLACK    =   6
+  CYAN_ON_BLACK       =   7
+  
+  BLACK_ON_WHITE      =  10
+  WHITE_ON_BLUE       =  11
+  
   GRADIENT_1_ON_BLACK = 100
   GRADIENT_2_ON_BLACK = 101
   GRADIENT_3_ON_BLACK = 102
@@ -48,6 +55,11 @@ class CursesColorHelper:
     curses.init_pair(ColorPair.BLACK_ON_WHITE, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(ColorPair.GREEN_ON_BLACK, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(ColorPair.WHITE_ON_BLUE, curses.COLOR_WHITE, curses.COLOR_BLUE)
+    curses.init_pair(ColorPair.BLUE_ON_BLACK, curses.COLOR_BLUE, curses.COLOR_BLACK)
+    curses.init_pair(ColorPair.YELLOW_ON_BLACK, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    curses.init_pair(ColorPair.RED_ON_BLACK, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(ColorPair.MAGENTA_ON_BLACK, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+    curses.init_pair(ColorPair.CYAN_ON_BLACK, curses.COLOR_CYAN, curses.COLOR_BLACK)
 
   def color_byte_to_curses_int(self, color_byte):
     scale = 1000 / 255

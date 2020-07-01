@@ -1,8 +1,8 @@
 import os
 import time
 import curses
+import curses.ascii
 import random
-from curses.textpad import rectangle
 from cell_matrix import CellMatrix
 from curses_colors import ColorPair, CursesColorHelper
 from curses_helpers import ScreenText, PatternHelper, DisplayArea, PatternHelper
@@ -14,7 +14,7 @@ class GameOfLife():
     self.screen_text = None
     self.display_area = None
     self.pattern_helper = None
-    self.menu_choices = None
+    self.current_menu_choices = None
 
   def start(self):
     os.environ.setdefault("ESCDELAY", "0")
@@ -26,9 +26,11 @@ class GameOfLife():
     self.screen_text = ScreenText(stdscr)
     self.display_area = DisplayArea(0, 0, self.stdscr.getmaxyx()[0] - 2, self.stdscr.getmaxyx()[1] - 1)
     self.pattern_helper = PatternHelper(self.display_area.get_num_rows(), self.display_area.get_num_cols())
-    self.menu_choices = [*self.pattern_helper.get_pattern_names()]
-    self.menu_choices.append("Random Pattern")
-    self.menu_choices.append("Custom Pattern")
+    
+    self.main_menu_choices = ["Popular Patterns", "Random Pattern", "Create New Pattern", "Saved Patterns", "Load from RLE", "Quit"]
+    self.pattern_menu_choices = [*self.pattern_helper.get_pattern_names()]
+    self.current_menu_choices = self.main_menu_choices
+    self.custom_pattern_menu_choices = []
 
   def curses_wrapper(self, stdscr):
     self.curses_init(stdscr)
@@ -52,26 +54,51 @@ class GameOfLife():
         if menu_idx > 0:
           menu_idx -= 1
         else:
-          menu_idx = len(self.menu_choices) - 1
+          menu_idx = len(self.current_menu_choices) - 1
       elif key == curses.KEY_DOWN:
-        if menu_idx < len(self.menu_choices) - 1:
+        if menu_idx < len(self.current_menu_choices) - 1:
           menu_idx += 1
         else:
           menu_idx = 0
       elif key == curses.KEY_ENTER or key in [10, 13] or key == curses.ascii.SP:
-        if self.menu_choices[menu_idx] == "Exit":
+        if self.current_menu_choices is self.main_menu_choices:
+          if self.main_menu_choices[menu_idx] == "Quit":
+            break
+
+          elif self.main_menu_choices[menu_idx] == "Create New Pattern":
+            new_pattern_name = self.start_pattern_creation(custom_pattern_menu_idx) # edit mode
+            if new_pattern_name != None:
+              self.screen_text.modal_popup("Your new design is available under the 'Saved Patterns' menu item.", self.display_area)
+              self.custom_pattern_menu_choices.append(new_pattern_name)
+              custom_pattern_menu_idx += 1
+      
+          elif self.main_menu_choices[menu_idx] == "Random Pattern":
+            self.show_evolution(self.main_menu_choices[menu_idx]) # start with random pattern
+        
+          elif self.main_menu_choices[menu_idx] == "Popular Patterns":
+            self.current_menu_choices = self.pattern_menu_choices
+            menu_idx = 0
+          
+          elif self.main_menu_choices[menu_idx] == "Saved Patterns":
+            if len(self.custom_pattern_menu_choices) > 0:
+              self.current_menu_choices = self.custom_pattern_menu_choices
+              menu_idx = 0
+
+          elif self.main_menu_choices[menu_idx] == "Load from RLE":
+            self.screen_text.modal_popup("Not Implemented", self.display_area, 1)
+          
+        elif self.current_menu_choices is self.pattern_menu_choices:
+          self.show_evolution(self.pattern_menu_choices[menu_idx])
+
+        elif self.current_menu_choices is self.custom_pattern_menu_choices:
+          self.show_evolution(self.custom_pattern_menu_choices[menu_idx])
+      
+      elif key == curses.ascii.ESC:
+        if self.current_menu_choices is self.main_menu_choices: # exit
           break
-        elif self.menu_choices[menu_idx] == "Custom Pattern":
-          new_pattern_name = self.start_pattern_creation(custom_pattern_menu_idx) # edit mode
-          if new_pattern_name != None:
-            self.menu_choices.insert(len(self.menu_choices) - 1, new_pattern_name)
-            custom_pattern_menu_idx += 1
-        elif self.menu_choices[menu_idx] == "Random Pattern":
-          self.show_evolution(self.menu_choices[menu_idx]) # start with random pattern
-        else:
-          self.show_evolution(self.menu_choices[menu_idx]) # start with predefined pattern
-      elif key == curses.ascii.ESC: # exit
-        break
+        else: # back to main menu
+          self.current_menu_choices = self.main_menu_choices
+          menu_idx = 0
 
       self.print_menu(menu_idx)
 
@@ -85,20 +112,33 @@ class GameOfLife():
 
     welcome_msg = "Welcome to the Game of Life"
     author_msg = "Implemented in Python by Asher Kobin"
+    instructions_msg = "Choose from a list of popular patterns, generate a random pattern, or create your own."
     
     if num_rows < 40:
       start_row = 1
     else:
       start_row = 10
-    
-    welcome_col = num_cols // 2 - len(welcome_msg) // 2
-    author_col = num_cols // 2 - len(author_msg) // 2
 
-    self.screen_text.print(welcome_msg, ColorPair.GREEN_ON_BLACK, start_row, welcome_col)
-    self.screen_text.print(author_msg, ColorPair.GREEN_ON_BLACK, start_row + 2, author_col)
+    welcome_msg_row = start_row
+    author_msg_row = start_row + 2
+    instructions_msg_row = start_row + 8
     
-    for idx, menu_item in enumerate(self.menu_choices):
-      menu_item_row = num_rows // 2 - len(self.menu_choices) // 2 + idx
+    # calculate the starting column to center the mesage
+    welcome_msg_col = num_cols // 2 - len(welcome_msg) // 2
+    author_msg_col = num_cols // 2 - len(author_msg) // 2
+    instructions_msg_col = num_cols // 2 - len(instructions_msg) // 2
+
+    self.screen_text.rectangle(start_row - 2, author_msg_col - 2, start_row + 4, author_msg_col + len(author_msg) + 1, ColorPair.WHITE_ON_BLACK)
+
+    self.screen_text.print(welcome_msg, ColorPair.GREEN_ON_BLACK, welcome_msg_row, welcome_msg_col)
+    self.screen_text.print(author_msg, ColorPair.YELLOW_ON_BLACK, author_msg_row, author_msg_col)
+
+    self.screen_text.print(instructions_msg, ColorPair.WHITE_ON_BLACK, instructions_msg_row, instructions_msg_col)
+
+    menu_start_row = start_row + 12
+    
+    for idx, menu_item in enumerate(self.current_menu_choices):
+      menu_item_row = menu_start_row + idx
       menu_item_col = num_cols // 2 - len(menu_item) // 2
       
       if idx == selected_menu_idx:
@@ -107,7 +147,7 @@ class GameOfLife():
         self.screen_text.print(menu_item, ColorPair.WHITE_ON_BLACK, menu_item_row, menu_item_col)
     
     # status bar
-    status_bar_text = " Use ARROW keys to Select Pattern | Press ESC to Quit"
+    status_bar_text = " Use ARROW keys to Select Option | Press ESC to Quit"
     self.screen_text.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, 0)
     status_bar_padding = " " * ((self.display_area.max_col_idx + 2) - len(status_bar_text) - 1)
     self.screen_text.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, len(status_bar_text))
@@ -260,8 +300,8 @@ class GameOfLife():
           cell_matrix.create_cell_unit(start_row + row_idx, start_col + col_idx)
 
   def print_display_ui(self, interval_speed, num_of_evolutions):
-    # display rectangle
-    rectangle(self.stdscr,
+    # display screen border
+    self.screen_text.rectangle(
       self.display_area.start_row_idx,
       self.display_area.start_col_idx,
       self.display_area.max_row_idx,
@@ -443,8 +483,8 @@ class GameOfLife():
     return new_pattern_name
 
   def print_edit_ui(self):
-    # display rectangle
-    rectangle(self.stdscr,
+    # display screen border
+    self.screen_text.rectangle(
       self.display_area.start_row_idx,
       self.display_area.start_col_idx,
       self.display_area.max_row_idx,
@@ -499,6 +539,9 @@ class GameOfLife():
   def load_rle_file(self):
     s = "x = 5, y = 18, rule = B3/S23\n3bo$4bo$o3bo$b4o4$o$b2o$2bo$2bo$bo3$3bo$4bo$o3bo$b4o!"
     s = "x = 76, y = 59, rule = B3/S23\n12bo$13b2o$12b2o2$5bo$3bobo4bo$4b2o5b2o$10b2o2$3bo$bobo$2b2o2$73bobo$73b2o$74bo11$30bo$31b2o$30b2o24$63b3o$63bo$64bo2$34b2o$35b2o$34bo!"
+    s = "x = 26, y = 12, rule = LifeHistory:C40,20\n15.A$2A12.A9.2A$A.A11.3A6.A.A$A24.A4$9.A.A$8.A$8.A$8.A2.A$8.3A!"
+    s = "x = 49, y = 26, rule = B3/S23\n20b3o3b3o$19bo2bo3bo2bo$4o18bo3bo18b4o$o3bo17bo3bo17bo3bo$o8bo12bo3bo12bo8bo$bo2bo2b2o2bo25bo2b2o2bo2bo$6bo5bo7b3o3b3o7bo5bo$6bo5bo8bo5bo8bo5bo$6bo5bo8b7o8bo5bo$bo2bo2b2o2bo2b2o4bo7bo4b2o2bo2b2o2bo2bo$o8bo3b2o4b11o4b2o3bo8bo$o3bo9b2o17b2o9bo3bo$4o11b19o11b4o$16bobo11bobo$19b11o$19bo9bo$20b9o$24bo$20b3o3b3o$22bo3bo2$21b3ob3o$21b3ob3o$20bob2ob2obo$20b3o3b3o$21bo5bo!"
+
     pattern = self.pattern_helper.rle_to_matrix(s, self.display_area.max_row_idx, self.display_area.max_col_idx)
 
     return pattern
