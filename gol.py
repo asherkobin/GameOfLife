@@ -1,6 +1,7 @@
 import os
 import time
 import curses
+import curses.textpad
 import curses.ascii
 import random
 from cell_matrix import CellMatrix
@@ -34,6 +35,10 @@ class GameOfLife():
 
   def curses_wrapper(self, stdscr):
     self.curses_init(stdscr)
+    curses.curs_set(0)
+    self.get_text_input()
+
+    return
 
     # hide cursor
     curses.curs_set(0)
@@ -85,7 +90,11 @@ class GameOfLife():
               menu_idx = 0
 
           elif self.main_menu_choices[menu_idx] == "Load from RLE":
-            self.screen_text.modal_popup("Not Implemented", self.display_area, 1)
+            new_pattern_name = self.start_pattern_creation(custom_pattern_menu_idx, True) # edit mode
+            if new_pattern_name != None:
+              self.screen_text.modal_popup("Your new design is available under the 'Saved Patterns' menu item.", self.display_area)
+              self.custom_pattern_menu_choices.append(new_pattern_name)
+              custom_pattern_menu_idx += 1
           
         elif self.current_menu_choices is self.pattern_menu_choices:
           self.show_evolution(self.pattern_menu_choices[menu_idx])
@@ -114,7 +123,7 @@ class GameOfLife():
     author_msg = "Implemented in Python by Asher Kobin"
     instructions_msg = "Choose from a list of popular patterns, generate a random pattern, or create your own."
     
-    if num_rows < 40:
+    if num_rows < 30:
       start_row = 1
     else:
       start_row = 10
@@ -365,7 +374,78 @@ class GameOfLife():
   
     return drew_cell # if False, then there are no living cells
 
-  def start_pattern_creation(self, custom_pattern_menu_idx):
+  def get_text_input(self):
+    import os
+    #self.screen_text.rectangle(15, 19, 19, 70)
+    #text_input_win = curses.newwin(1, 50, 20, 20)
+    #text_input = curses.textpad.Textbox(text_input_win)
+    
+    #self.screen_text.rectangle(19, 19, 21, 70)
+    
+    #curses.curs_set(1)
+    #text_input.edit()
+    #curses.curs_set(0)
+    self.stdscr.clear()
+    
+    self.stdscr.attron(curses.color_pair(ColorPair.WHITE_ON_BLUE))
+
+    dlg_width = 50
+    dlg_title = "Select an RLE File"
+    dlg_title_start = dlg_width // 2 - len(dlg_title) // 2 + 1
+    dir_entries = os.listdir()
+    
+    self.stdscr.addch(0, 0, curses.ACS_ULCORNER)
+    self.stdscr.hline(0, 1, curses.ACS_HLINE, dlg_width)
+    self.stdscr.addch(0, dlg_width + 1, curses.ACS_URCORNER)
+
+    self.stdscr.hline(1, 1, ord(' '), dlg_width)
+    self.stdscr.addstr(1, dlg_title_start, dlg_title)
+
+    self.stdscr.vline(1, 0, curses.ACS_VLINE, 1)
+    self.stdscr.vline(1, dlg_width + 1, curses.ACS_VLINE, 1)
+    
+    self.stdscr.addch(2, 0, curses.ACS_LTEE)
+    self.stdscr.hline(2, 1, curses.ACS_HLINE, dlg_width)
+    self.stdscr.addch(2, dlg_width + 1, curses.ACS_RTEE)
+
+    _, dir_names, file_names = next(os.walk("."))
+    cur_row = 3
+    
+    self.stdscr.addstr(cur_row, 1, "..")
+    cur_row += 1
+    
+    for dir_name in dir_names:
+      self.stdscr.addstr(cur_row, 1, "/" + dir_name)
+      cur_row += 1
+      if cur_row > 12:
+        break
+
+    for file_name in file_names:
+      stat_info = os.stat(file_name)
+      file_size = stat_info.st_size
+      self.stdscr.addstr(cur_row, 1, file_name + f"    {file_size}")
+      cur_row += 1
+      if cur_row > 12:
+        break
+    
+    self.stdscr.vline(3, 0, curses.ACS_VLINE, 10)
+    self.stdscr.vline(3, dlg_width + 1, curses.ACS_VLINE, 10)
+    
+    self.stdscr.addch(13, 0, curses.ACS_LLCORNER)
+    self.stdscr.hline(13, 1, curses.ACS_HLINE, dlg_width)
+    self.stdscr.addch(13, dlg_width + 1, curses.ACS_LRCORNER)
+
+    self.stdscr.attroff(curses.color_pair(ColorPair.WHITE_ON_BLUE))  
+    
+    self.stdscr.refresh()
+    self.stdscr.getch()
+    self.stdscr.clear()
+    
+    
+
+    return "HI" #text_input.gather()
+
+  def start_pattern_creation(self, custom_pattern_menu_idx, load_rle = False):
     new_pattern_name = "User Generated"
     num_rows = self.display_area.get_num_rows()
     num_cols = self.display_area.get_num_cols()
@@ -384,6 +464,14 @@ class GameOfLife():
     cursor_currently_on_cell = False
     
     self.print_edit_ui()
+
+    if load_rle:
+      matrix = self.load_rle_file_into_editor()
+      for row_idx in range(len(matrix)):
+        for col_idx in range(len(matrix[0])):
+          if matrix[row_idx][col_idx] == 1:
+            cell_coordinate_list.append((row_idx + 1, col_idx + 1))
+            self.screen_text.print(cell_char, ColorPair.WHITE_ON_BLACK, row_idx + 1, col_idx + 1)
 
     self.screen_text.print(cursor_char_on, ColorPair.WHITE_ON_BLACK, cursor_row, cursor_col)
     self.stdscr.refresh()
@@ -424,12 +512,9 @@ class GameOfLife():
         self.save_pattern(cell_coordinate_list)
         ignore_key_press = True
       elif key == 108: # 'l'
-        matrix = self.load_rle_file()
-        for row_idx in range(len(matrix)):
-          for col_idx in range(len(matrix[0])):
-            if matrix[row_idx][col_idx] == 1:
-              cell_coordinate_list.append((row_idx + 1, col_idx + 1))
-              self.screen_text.print(cell_char, ColorPair.WHITE_ON_BLACK, row_idx + 1, col_idx + 1)
+        lre_file_name = self.get_text_input()
+        #self.screen_text.modal_popup(lre_file_name, self.display_area, 2)
+        ignore_key_press = True
       else:
         ignore_key_press = True
 
@@ -536,7 +621,7 @@ class GameOfLife():
       pattern_file.write(str(row) + "\n")
     pattern_file.close()
 
-  def load_rle_file(self):
+  def load_rle_file_into_editor(self):
     s = "x = 5, y = 18, rule = B3/S23\n3bo$4bo$o3bo$b4o4$o$b2o$2bo$2bo$bo3$3bo$4bo$o3bo$b4o!"
     s = "x = 76, y = 59, rule = B3/S23\n12bo$13b2o$12b2o2$5bo$3bobo4bo$4b2o5b2o$10b2o2$3bo$bobo$2b2o2$73bobo$73b2o$74bo11$30bo$31b2o$30b2o24$63b3o$63bo$64bo2$34b2o$35b2o$34bo!"
     s = "x = 26, y = 12, rule = LifeHistory:C40,20\n15.A$2A12.A9.2A$A.A11.3A6.A.A$A24.A4$9.A.A$8.A$8.A$8.A2.A$8.3A!"
