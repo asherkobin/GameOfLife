@@ -84,15 +84,58 @@ class PatternHelper():
   def get(self, name):
     return self.patterns[name]
 
-  def add(self, name, pattern):
-    self.patterns[name] = pattern
+  def add(self, pattern_name, pattern_matrix, create_file = False):
+    self.patterns[pattern_name] = pattern_matrix
+
+    if create_file:
+      pattern_name = pattern_name.replace(" ", "_")
+      with open(pattern_name + ".gol", "w") as pattern_file:
+        for row in pattern_matrix:
+          pattern_file.write(str(row) + "\n")
+  
+  def conwaylife_to_matrix(self, cl_string, max_rows, max_cols):
+    matrix = None
+    cl_lines = cl_string.splitlines()
+
+    num_rows = 0
+    num_cols = 0
+
+    for _ in cl_lines:
+      num_rows += 1
+
+    for _ in cl_lines[0].strip():
+      num_cols += 1
+
+    matrix = [[0 for _ in range(num_cols)] for _ in range(num_rows)]
+
+    row_num = 0
+    col_num = 0
+
+    for cl_line in cl_lines:
+      cl_line = cl_line.strip()
+      for cl_char in cl_line:
+        if cl_char == 'O':
+          matrix[row_num][col_num] = 1
+        col_num += 1
+      row_num += 1
+      col_num = 0
+
+    return matrix
   
   def rle_to_matrix(self, rle_string, max_rows, max_cols):
     matrix = None
 
     try:
       rle_lines = rle_string.splitlines()
-      rle_info_line = rle_lines[0]
+      rle_start = 0
+
+      for rle_line in rle_lines:
+        if rle_line[0] == "#":
+          rle_start += 1
+        else:
+          break
+
+      rle_info_line = rle_lines[rle_start]
       rle_info_parts = rle_info_line.split(", ")
       rle_info = {}
 
@@ -112,7 +155,7 @@ class PatternHelper():
       if rle_info["rule"] != "B3/S23":
         raise RleException(f"Invalid format: {rle_info['rule']}")
 
-      rle_lines = rle_lines[1:]
+      rle_lines = rle_lines[rle_start:]
       rle_data = ""
 
       for rle_line in rle_lines:

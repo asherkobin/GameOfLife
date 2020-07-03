@@ -29,6 +29,9 @@ class EditMode():
     self.curses_screen.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, len(status_bar_text))
 
   def start(self, custom_pattern_menu_idx, load_rle = False):
+    self.cell_coordinate_list = []
+    self.draw_mode = False
+    
     new_pattern_name = "User Generated"
     cursor_row = self.num_rows // 2 
     cursor_col = self.num_cols // 2
@@ -188,15 +191,15 @@ class EditMode():
       new_pattern_name = new_pattern_name + " " + str(custom_pattern_menu_idx)
       new_pattern_matrix = self.pattern_helper.make_matrix_from_coords(self.cell_coordinate_list)
       if new_pattern_matrix:
-        self.pattern_helper.add(new_pattern_name, new_pattern_matrix)
+        self.pattern_helper.add(new_pattern_name, new_pattern_matrix, True)
       else:
         new_pattern_name = None
     
     return new_pattern_name
 
   def handle_save(self):
-    self.curses_screen.modal_popup("Save Not Implemented", self.display_area, 2)
-    #self.save_pattern(cell_coordinate_list)
+    self.save_pattern(self.cell_coordinate_list)
+    self.curses_screen.modal_popup("Saved to pattern.txt", self.display_area, 2)
 
   def handle_load(self):
     self.curses_screen.modal_popup("Load Not Implemented", self.display_area, 2)
@@ -210,10 +213,15 @@ class EditMode():
     try:
       matrix = self.pattern_helper.rle_to_matrix(rle_data, self.display_area.max_row_idx - 1, self.display_area.max_col_idx - 1)
     except RleException as e:
+      try:
+        matrix = self.pattern_helper.conwaylife_to_matrix(rle_data, self.display_area.max_row_idx - 1, self.display_area.max_col_idx - 1)
+        e.message = "CL_OK"
+      except:
+        e.message = "CL_FAIL"
       if e.message == "Invalid Format":
         return "Clipboard does not contain RLE data."
-      else:
-        return e.message
+      elif e.message == "CL_FAIL":
+        return "Clipboard does not contain Conway Life data."
     
     for row_idx in range(len(matrix)):
       for col_idx in range(len(matrix[0])):
@@ -226,12 +234,16 @@ class EditMode():
   def save_pattern(self, cell_coordinate_list):
     if len(cell_coordinate_list) > 0:
       pattern_matrix = self.pattern_helper.make_matrix_from_coords(cell_coordinate_list)
-      pattern_file = open("pattern.txt", "w")
-      for row in pattern_matrix:
-        pattern_file.write(str(row) + "\n")
-      pattern_file.close()
+      
+      num_rows = len(pattern_matrix)
+      num_cols = len(pattern_matrix[0])
+      
+      with open("pattern.txt", "w") as pattern_file:
+        pattern_file.writelines([f"({num_rows}, {num_cols})"])
+        pattern_lines = [str(row) for row in pattern_matrix]
+        pattern_file.writelines(pattern_lines)
     else:
-      self.curses_screen.modal_popup("Nothing to save!", self.display_area, 3)
+      self.curses_screen.modal_popup("Nothing to save!", self.display_area, 2)
 
   def load_rle_data_into_editor(self, rle_data):
     s = "x = 5, y = 18, rule = B3/S23\n3bo$4bo$o3bo$b4o4$o$b2o$2bo$2bo$bo3$3bo$4bo$o3bo$b4o!"

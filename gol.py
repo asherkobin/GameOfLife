@@ -36,6 +36,26 @@ class GameOfLife():
     self.current_menu_choices = self.main_menu_choices
     self.custom_pattern_menu_choices = []
 
+    dir_entries = os.listdir()
+
+    for dir_entry in dir_entries:
+      if dir_entry[-4:] == ".gol":
+        pattern_name = dir_entry[0:-4]
+        pattern_name = pattern_name.replace("_", " ")
+        
+        with open(dir_entry, "r") as pattern_file:
+          pattern_file_lines = pattern_file.readlines()
+          pattern_matrix = []
+
+          for n in range(0, len(pattern_file_lines)):
+            matrix_line = pattern_file_lines[n][1:-2] # [1, 0, 1, 1]\n
+            matrix_line = matrix_line.split(", ")
+            matrix_line = list(map(int, matrix_line))
+            pattern_matrix.append(matrix_line)
+
+          self.pattern_helper.add(pattern_name, pattern_matrix)
+          self.custom_pattern_menu_choices.append(pattern_name)
+
   def curses_wrapper(self, stdscr):
     self.curses_init(stdscr)
 
@@ -117,6 +137,7 @@ class GameOfLife():
     welcome_msg = "Welcome to the Game of Life"
     author_msg = "Implemented in Python by Asher Kobin"
     instructions_msg = "Choose from a list of popular patterns, generate a random pattern, or create your own."
+    secondary_msg = "Discover other patterns at https://www.conwaylife.com/wiki/Category:Patterns"
     
     if num_rows < 30:
       start_row = 2
@@ -126,18 +147,21 @@ class GameOfLife():
     welcome_msg_row = start_row
     author_msg_row = start_row + 2
     instructions_msg_row = start_row + 8
+    secondary_msg_row = start_row + 20
     
     # calculate the starting column to center the mesage
     welcome_msg_col = num_cols // 2 - len(welcome_msg) // 2
     author_msg_col = num_cols // 2 - len(author_msg) // 2
     instructions_msg_col = num_cols // 2 - len(instructions_msg) // 2
+    secondary_msg_col = num_cols // 2 - len(secondary_msg) // 2
 
     self.curses_screen.rectangle(start_row - 2, author_msg_col - 2, start_row + 4, author_msg_col + len(author_msg) + 1, ColorPair.WHITE_ON_BLACK)
 
     self.curses_screen.print(welcome_msg, ColorPair.GREEN_ON_BLACK, welcome_msg_row, welcome_msg_col)
-    self.curses_screen.print(author_msg, ColorPair.YELLOW_ON_BLACK, author_msg_row, author_msg_col)
+    self.curses_screen.print(author_msg, ColorPair.CYAN_ON_BLACK, author_msg_row, author_msg_col)
 
     self.curses_screen.print(instructions_msg, ColorPair.WHITE_ON_BLACK, instructions_msg_row, instructions_msg_col)
+    self.curses_screen.print(secondary_msg, ColorPair.YELLOW_ON_BLACK, secondary_msg_row, secondary_msg_col)
 
     menu_start_row = start_row + 12
     
@@ -167,6 +191,7 @@ class GameOfLife():
     num_rows = self.display_area.get_num_rows()
     num_cols = self.display_area.get_num_cols()
     quit_fast = False
+    wrap_around = True
     
     # performance counters
     
@@ -180,10 +205,10 @@ class GameOfLife():
     # 5) evolve
     # 6) goto step 3
     
-    cell_matrix = CellMatrix(num_rows - 1, num_cols - 1)
+    cell_matrix = CellMatrix(num_rows - 1, num_cols - 1, wrap_around)
   
     self.load_pattern(shape_name, cell_matrix)
-    self.print_display_ui(current_delay, num_of_evolutions)
+    self.print_display_ui(current_delay, num_of_evolutions, wrap_around)
     self.print_matrix(cell_matrix)
 
     self.stdscr.refresh()
@@ -209,7 +234,7 @@ class GameOfLife():
       num_of_evolutions += 1
       
       self.stdscr.erase()
-      self.print_display_ui(current_delay, num_of_evolutions)
+      self.print_display_ui(current_delay, num_of_evolutions, wrap_around)
 
       continue_evolution = self.print_matrix(cell_matrix)
       
@@ -233,6 +258,9 @@ class GameOfLife():
           self.stdscr.nodelay(0) # reset "getch" to block
         else:
           self.stdscr.nodelay(1) # instruct "getch" to not block
+      elif key == ord('m'): # toggle wrap mode
+        wrap_around = not wrap_around
+        cell_matrix.wrap_around = wrap_around
       
       self.stdscr.addstr(0, 2, f" Rows: {num_rows} Cols: {num_cols} Cells: {grid_size} FPS: {frames_per_sec} ")
       
@@ -302,7 +330,7 @@ class GameOfLife():
         if pattern_matrix[row_idx][col_idx] == 1:
           cell_matrix.create_cell_unit(start_row + row_idx, start_col + col_idx)
 
-  def print_display_ui(self, interval_speed, num_of_evolutions):
+  def print_display_ui(self, interval_speed, num_of_evolutions, wrap_around):
     # display screen border
     self.curses_screen.rectangle(
       self.display_area.start_row_idx,
@@ -310,8 +338,13 @@ class GameOfLife():
       self.display_area.max_row_idx,
       self.display_area.max_col_idx)
 
+    if wrap_around:
+      wrap_around_mode = "W"
+    else:
+      wrap_around_mode = "B"
+
     # status bar
-    status_bar_text = f" Press ESC to Quit | Use ARROW UP or ARROW DOWN to Change Speed | SPACE to Pause (Any KEY for One Evolution) | Interval: {interval_speed} | Generations: {num_of_evolutions}"
+    status_bar_text = f" Press ESC to Quit | Use ARROW UP or ARROW DOWN to Change Speed | SPACE to Pause (Any KEY for One Evolution) | Speed: {interval_speed} | Mode: {wrap_around_mode} | Generations: {num_of_evolutions}"
     self.curses_screen.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, 0)
     status_bar_padding = " " * ((self.display_area.max_col_idx + 2) - len(status_bar_text) - 1)
     self.curses_screen.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, len(status_bar_text))
