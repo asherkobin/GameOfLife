@@ -16,7 +16,7 @@ class DisplayArea():
   def get_num_cols(self):
     return self.max_col_idx - self.start_col_idx
 
-class ScreenText():
+class CursesScreen():
   def __init__(self, stdscr):
     self.stdscr = stdscr
 
@@ -164,4 +164,37 @@ class PatternHelper():
     except Exception:
       raise RleException("Invalid Format")
 
+    return matrix
+
+  def make_matrix_from_coords(self, cell_coordinate_sets):
+    if len(cell_coordinate_sets) == 0:
+      return None
+    
+    min_row, min_col = cell_coordinate_sets[0]
+    max_row, max_col = cell_coordinate_sets[0]
+
+    for row, col in cell_coordinate_sets:
+      if row < min_row:
+        min_row = row
+      if col < min_col:
+        min_col = col
+      if row > max_row:
+        max_row = row
+      if col > max_col:
+        max_col = col
+
+    adj_rows = max_row - min_row + 1
+    adj_cols = max_col - min_col + 1
+    adj_cell_coordinate_sets = []
+    
+    for row, col in cell_coordinate_sets:
+      adj_cell_coordinate_sets.append((row - min_row, col - min_col))
+
+    matrix = [[0 for _ in range(adj_cols)] for _ in range(adj_rows)]
+
+    for row_idx in range(adj_rows):
+      for col_idx in range(adj_cols):
+        if (row_idx, col_idx) in adj_cell_coordinate_sets:
+          matrix[row_idx][col_idx] = 1
+    
     return matrix

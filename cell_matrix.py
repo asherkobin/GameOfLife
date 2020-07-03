@@ -6,7 +6,7 @@ class CellState():
     self.frame = frame
 
 class CellMatrix():
-  def __init__(self, height = 15, width = 15, wrap_around = False):
+  def __init__(self, height = 15, width = 15, wrap_around = True):
     self.num_rows = height
     self.num_cols = width
     self.matrix = [[False for _ in range(self.num_cols)] for _ in range(self.num_rows)]

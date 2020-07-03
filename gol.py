@@ -6,16 +6,18 @@ import curses.ascii
 import random
 from cell_matrix import CellMatrix
 from curses_colors import ColorPair, CursesColorHelper
-from curses_helpers import ScreenText, PatternHelper, DisplayArea, PatternHelper, RleException
-  
+from curses_helpers import CursesScreen, PatternHelper, DisplayArea, PatternHelper, RleException
+from edit_mode import EditMode
+
 class GameOfLife():
   def __init__(self):
     self.stdscr = None
     self.curses_color_helper = CursesColorHelper()
-    self.screen_text = None
+    self.curses_screen = None
     self.display_area = None
     self.pattern_helper = None
     self.current_menu_choices = None
+    self.edit_mode = None
 
   def start(self):
     os.environ.setdefault("ESCDELAY", "0")
@@ -24,10 +26,11 @@ class GameOfLife():
   def curses_init(self, stdscr):
     self.stdscr = stdscr
     self.curses_color_helper.init_color_pairs()
-    self.screen_text = ScreenText(stdscr)
+    self.curses_screen = CursesScreen(stdscr)
     self.display_area = DisplayArea(0, 0, self.stdscr.getmaxyx()[0] - 2, self.stdscr.getmaxyx()[1] - 1)
     self.pattern_helper = PatternHelper(self.display_area.get_num_rows(), self.display_area.get_num_cols())
-    
+    self.edit_mode = EditMode(self.curses_screen, self.display_area, self.pattern_helper)
+
     self.main_menu_choices = ["Popular Patterns", "Random Pattern", "Create New Pattern", "Saved Patterns", "Load from RLE", "Quit"]
     self.pattern_menu_choices = [*self.pattern_helper.get_pattern_names()]
     self.current_menu_choices = self.main_menu_choices
@@ -35,11 +38,6 @@ class GameOfLife():
 
   def curses_wrapper(self, stdscr):
     self.curses_init(stdscr)
-    curses.curs_set(0)
-    #self.get_text_input()
-    #self.screen_text.modal_popup("Help!", self.display_area, 0)
-    #self.stdscr.getch()
-    #return
 
     # hide cursor
     curses.curs_set(0)
@@ -72,9 +70,9 @@ class GameOfLife():
             break
 
           elif self.main_menu_choices[menu_idx] == "Create New Pattern":
-            new_pattern_name = self.editor_start(custom_pattern_menu_idx, False) # edit mode
+            new_pattern_name = self.edit_mode.start(custom_pattern_menu_idx, False) # edit mode
             if new_pattern_name != None:
-              self.screen_text.modal_popup("Your new design is available under the 'Saved Patterns' menu item.", self.display_area, 3)
+              self.curses_screen.modal_popup("Your new design is available under the 'Saved Patterns' menu item.", self.display_area, 3)
               self.custom_pattern_menu_choices.append(new_pattern_name)
               custom_pattern_menu_idx += 1
       
@@ -91,12 +89,7 @@ class GameOfLife():
               menu_idx = 0
 
           elif self.main_menu_choices[menu_idx] == "Load from RLE":
-            # new_pattern_name = self.editor_start(custom_pattern_menu_idx, False) # edit mode
-            # if new_pattern_name != None:
-            #   self.screen_text.modal_popup("Your new design is available under the 'Saved Patterns' menu item.", self.display_area)
-            #   self.custom_pattern_menu_choices.append(new_pattern_name)
-            #   custom_pattern_menu_idx += 1
-            pass
+            self.curses_screen.modal_popup("Load from RLE Not Implemented", self.display_area, 2)
           
         elif self.current_menu_choices is self.pattern_menu_choices:
           self.show_evolution(self.pattern_menu_choices[menu_idx])
@@ -139,12 +132,12 @@ class GameOfLife():
     author_msg_col = num_cols // 2 - len(author_msg) // 2
     instructions_msg_col = num_cols // 2 - len(instructions_msg) // 2
 
-    self.screen_text.rectangle(start_row - 2, author_msg_col - 2, start_row + 4, author_msg_col + len(author_msg) + 1, ColorPair.WHITE_ON_BLACK)
+    self.curses_screen.rectangle(start_row - 2, author_msg_col - 2, start_row + 4, author_msg_col + len(author_msg) + 1, ColorPair.WHITE_ON_BLACK)
 
-    self.screen_text.print(welcome_msg, ColorPair.GREEN_ON_BLACK, welcome_msg_row, welcome_msg_col)
-    self.screen_text.print(author_msg, ColorPair.YELLOW_ON_BLACK, author_msg_row, author_msg_col)
+    self.curses_screen.print(welcome_msg, ColorPair.GREEN_ON_BLACK, welcome_msg_row, welcome_msg_col)
+    self.curses_screen.print(author_msg, ColorPair.YELLOW_ON_BLACK, author_msg_row, author_msg_col)
 
-    self.screen_text.print(instructions_msg, ColorPair.WHITE_ON_BLACK, instructions_msg_row, instructions_msg_col)
+    self.curses_screen.print(instructions_msg, ColorPair.WHITE_ON_BLACK, instructions_msg_row, instructions_msg_col)
 
     menu_start_row = start_row + 12
     
@@ -153,15 +146,15 @@ class GameOfLife():
       menu_item_col = num_cols // 2 - len(menu_item) // 2
       
       if idx == selected_menu_idx:
-        self.screen_text.print(" " + menu_item + " ", ColorPair.WHITE_ON_BLUE, menu_item_row, menu_item_col - 1)
+        self.curses_screen.print(" " + menu_item + " ", ColorPair.WHITE_ON_BLUE, menu_item_row, menu_item_col - 1)
       else:
-        self.screen_text.print(menu_item, ColorPair.WHITE_ON_BLACK, menu_item_row, menu_item_col)
+        self.curses_screen.print(menu_item, ColorPair.WHITE_ON_BLACK, menu_item_row, menu_item_col)
     
     # status bar
     status_bar_text = " Use ARROW keys to Select Option | Press ESC to Quit"
-    self.screen_text.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, 0)
+    self.curses_screen.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, 0)
     status_bar_padding = " " * ((self.display_area.max_col_idx + 2) - len(status_bar_text) - 1)
-    self.screen_text.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, len(status_bar_text))
+    self.curses_screen.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, len(status_bar_text))
 
     self.stdscr.refresh()
 
@@ -263,9 +256,8 @@ class GameOfLife():
     goodbye_msg_row = num_rows // 2
     goodbye_msg_col = num_cols // 2 - len(goodbye_msg) // 2
 
-    self.stdscr.attron(curses.color_pair(3) | curses.A_BOLD)
-    self.stdscr.addstr(goodbye_msg_row, goodbye_msg_col, goodbye_msg)
-    self.stdscr.attroff(curses.color_pair(3) | curses.A_BOLD)
+    self.curses_screen.print(goodbye_msg, ColorPair.RED_ON_BLACK, goodbye_msg_row, goodbye_msg_col)
+
     self.stdscr.refresh()
 
     time.sleep(2)
@@ -312,7 +304,7 @@ class GameOfLife():
 
   def print_display_ui(self, interval_speed, num_of_evolutions):
     # display screen border
-    self.screen_text.rectangle(
+    self.curses_screen.rectangle(
       self.display_area.start_row_idx,
       self.display_area.start_col_idx,
       self.display_area.max_row_idx,
@@ -320,9 +312,9 @@ class GameOfLife():
 
     # status bar
     status_bar_text = f" Press ESC to Quit | Use ARROW UP or ARROW DOWN to Change Speed | SPACE to Pause (Any KEY for One Evolution) | Interval: {interval_speed} | Generations: {num_of_evolutions}"
-    self.screen_text.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, 0)
+    self.curses_screen.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, 0)
     status_bar_padding = " " * ((self.display_area.max_col_idx + 2) - len(status_bar_text) - 1)
-    self.screen_text.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, len(status_bar_text))
+    self.curses_screen.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, len(status_bar_text))
 
   def print_matrix(self, cell_matrix):
     drew_cell = False
@@ -362,21 +354,29 @@ class GameOfLife():
             cell_char = char_chars_animation[cell_frame]
 
           if cell_age == 0:
-            self.screen_text.print(cell_char, ColorPair.GRADIENT_1_ON_BLACK, row_idx + 1, col_idx + 1)
+            self.curses_screen.print(cell_char, ColorPair.GRADIENT_1_ON_BLACK, row_idx + 1, col_idx + 1)
           elif cell_age < 20:
-            self.screen_text.print(cell_char, ColorPair.GRADIENT_2_ON_BLACK, row_idx + 1, col_idx + 1)
+            self.curses_screen.print(cell_char, ColorPair.GRADIENT_2_ON_BLACK, row_idx + 1, col_idx + 1)
           elif cell_age < 50:
-            self.screen_text.print(cell_char, ColorPair.GRADIENT_3_ON_BLACK, row_idx + 1, col_idx + 1)
+            self.curses_screen.print(cell_char, ColorPair.GRADIENT_3_ON_BLACK, row_idx + 1, col_idx + 1)
           elif cell_age < 100:
-            self.screen_text.print(cell_char, ColorPair.GRADIENT_4_ON_BLACK, row_idx + 1, col_idx + 1)
+            self.curses_screen.print(cell_char, ColorPair.GRADIENT_4_ON_BLACK, row_idx + 1, col_idx + 1)
           else:
-            self.screen_text.print(cell_char, ColorPair.GRADIENT_5_ON_BLACK, row_idx + 1, col_idx + 1)
+            self.curses_screen.print(cell_char, ColorPair.GRADIENT_5_ON_BLACK, row_idx + 1, col_idx + 1)
           
           drew_cell = True
   
     return drew_cell # if False, then there are no living cells
 
+  """
+  WORK IN PROGRESS
+  """
   def get_text_input(self):
+    #curses.curs_set(0)
+    #self.get_text_input()
+    #self.screen_text.modal_popup("Help!", self.display_area, 0)
+    #self.stdscr.getch()
+    #return
     import os
     #self.screen_text.rectangle(15, 19, 19, 70)
     #text_input_win = curses.newwin(1, 50, 20, 20)
@@ -443,269 +443,7 @@ class GameOfLife():
     self.stdscr.getch()
     self.stdscr.clear()
     
-    
-
     return "HI" #text_input.gather()
-
-  def editor_handle_paste(self, cell_char, cell_coordinate_list):
-    from clipboard import get_clipboard_text
-    rle_data = get_clipboard_text()
-    
-    matrix = None
-
-    try:
-      matrix = self.pattern_helper.rle_to_matrix(rle_data, self.display_area.max_row_idx - 1, self.display_area.max_col_idx - 1)
-    except RleException as e:
-      if e.message == "Invalid Format":
-        return "Clipboard does not contain RLE data."
-      else:
-        return e.message
-    
-    for row_idx in range(len(matrix)):
-      for col_idx in range(len(matrix[0])):
-        if matrix[row_idx][col_idx] == 1:
-          cell_coordinate_list.append((row_idx + 1, col_idx + 1))
-          self.screen_text.print(cell_char, ColorPair.WHITE_ON_BLACK, row_idx + 1, col_idx + 1)
-
-    return "OK"
-# move to class 
-  def editor_start(self, custom_pattern_menu_idx, load_rle = False):
-    new_pattern_name = "User Generated"
-    num_rows = self.display_area.get_num_rows()
-    num_cols = self.display_area.get_num_cols()
-    cursor_row = num_rows // 2 
-    cursor_col = num_cols // 2
-    prev_cursor_row = None
-    prev_cursor_col = None
-    cursor_char = " "
-    cell_char = "*"
-    cell_coordinate_list = []
-    discard_work = False
-    cursor_was_on_cell = False
-    draw_mode = False
-    
-    self.print_edit_ui(draw_mode)
-
-    if load_rle:
-      matrix = self.load_rle_data_into_editor("")
-      for row_idx in range(len(matrix)):
-        for col_idx in range(len(matrix[0])):
-          if matrix[row_idx][col_idx] == 1:
-            cell_coordinate_list.append((row_idx + 1, col_idx + 1))
-            self.screen_text.print(cell_char, ColorPair.WHITE_ON_BLACK, row_idx + 1, col_idx + 1)
-
-    self.screen_text.print(cursor_char, ColorPair.BLACK_ON_WHITE, cursor_row, cursor_col)
-    self.stdscr.refresh()
-    
-    while True:
-      key = self.stdscr.getch()
-
-      # reset for each key-press
-      cursor_moved = False
-      repaint_screen = False
-      add_cell = False  
-      remove_cell = False
-      cursor_was_on_cell = False
-
-      # save previous cursor location
-
-      prev_cursor_col = cursor_col
-      prev_cursor_row = cursor_row
-
-      # cursor movement
-
-      if key in [curses.KEY_UP, curses.KEY_DOWN, curses.KEY_LEFT, curses.KEY_RIGHT]:
-        if key == curses.KEY_UP:
-          if cursor_row > 1:
-            cursor_row -= 1
-        elif key == curses.KEY_DOWN:
-          if cursor_row < num_rows - 1:
-            cursor_row += 1
-        elif key == curses.KEY_LEFT:
-          if cursor_col > 1:
-            cursor_col -= 1
-        elif key == curses.KEY_RIGHT:
-          if cursor_col < num_cols - 1:
-            cursor_col += 1
-        
-        cursor_moved = True
-
-        cursor_on_cell = (cursor_row, cursor_col) in cell_coordinate_list
-        cursor_was_on_cell = (prev_cursor_row, prev_cursor_col) in cell_coordinate_list
-
-        if draw_mode and not cursor_on_cell:
-          add_cell = True
-
-      # toggle cell on/off
-      
-      elif key == curses.ascii.SP:
-        if cursor_on_cell:
-          remove_cell = True
-        else:
-          add_cell = True
-      
-      # save and quit
-
-      elif key == curses.KEY_ENTER or key in [10, 13]:
-        break
-
-      # discard and quit
-      
-      elif key == curses.ascii.ESC:
-        discard_work = True
-        break
-
-      # paste pattern stored in clipboard
-      
-      elif key == ord('p'):
-        paste_result = self.editor_handle_paste(cell_coordinate_list, cell_char)
-        if paste_result != "OK":
-          self.screen_text.modal_popup(paste_result, self.display_area, 2)
-          repaint_screen = True
-
-      # toggle draw-mode
-
-      elif key == ord('d'):
-        draw_mode = not draw_mode
-        if draw_mode:
-          add_cell = True
-        repaint_screen = True
-
-      # save pattern to file
-
-      elif key == ord('s'):
-        self.screen_text.modal_popup("Not Implemented", self.display_area, 2)
-        repaint_screen = True
-        #self.save_pattern(cell_coordinate_list)
-
-      # load pattern from file
-
-      elif key == ord('l'):
-        self.screen_text.modal_popup("Not Implemented", self.display_area, 2)
-        repaint_screen = True
-        #self.get_text_input()
-        #self.screen_text.modal_popup(lre_file_name, self.display_area, 2)
-
-      # process the status of the various flags
-
-      if cursor_moved:
-        if cursor_was_on_cell:
-          # print the cell where the cursor previously was located
-          self.screen_text.print(cell_char, ColorPair.WHITE_ON_BLACK, prev_cursor_row, prev_cursor_col)
-        else:
-          # erase the cursor from previous location
-          self.screen_text.print(cursor_char, ColorPair.WHITE_ON_BLACK, prev_cursor_row, prev_cursor_col)
-        
-        if cursor_on_cell:
-          # print cell at cursor location (inverted color)
-          self.screen_text.print(cell_char, ColorPair.BLACK_ON_WHITE, cursor_row, cursor_col)
-        else:
-          # print cursor
-          self.screen_text.print(cursor_char, ColorPair.BLACK_ON_WHITE, cursor_row, cursor_col)
-
-      if add_cell:
-        if cursor_on_cell:
-          raise Exception("Unexpected")
-        # print cell at cursor location (inverted color) and add it to the list
-        self.screen_text.print(cell_char, ColorPair.BLACK_ON_WHITE, cursor_row, cursor_col)
-        cell_coordinate_list.append((cursor_row ,cursor_col))
-
-      elif remove_cell:
-        if not cursor_on_cell:
-          raise Exception("Unexpected")
-        # print cursor and remove cell from the list
-        self.screen_text.print(cursor_char, ColorPair.BLACK_ON_WHITE, cursor_row, cursor_col)
-        cell_coordinate_list.append((cursor_row ,cursor_col))
-        cursor_on_cell = False        
-
-      elif repaint_screen:
-        self.stdscr.erase()
-        self.print_edit_ui(draw_mode)
-        for cell_coordinate in cell_coordinate_list:
-          self.screen_text.print(cell_char, ColorPair.WHITE_ON_BLACK, cell_coordinate[0], cell_coordinate[1])
-        if (cursor_row, cursor_col) in cell_coordinate_list:
-          self.screen_text.print(cell_char, ColorPair.BLACK_ON_WHITE, cursor_row, cursor_col)
-        else:
-          self.screen_text.print(cursor_char, ColorPair.BLACK_ON_WHITE, cursor_row, cursor_col)
-
-    if discard_work:
-      new_pattern_name = None
-    else:
-      new_pattern_name = new_pattern_name + " " + str(custom_pattern_menu_idx)
-      new_pattern_matrix = self.make_matrix_from_coords(cell_coordinate_list)
-      if len(new_pattern_matrix) != 0:
-        self.pattern_helper.add(new_pattern_name, new_pattern_matrix)
-      else:
-        new_pattern_name = None
-    
-    return new_pattern_name
-
-  def print_edit_ui(self, draw_mode):
-    # display screen border
-    self.screen_text.rectangle(
-      self.display_area.start_row_idx,
-      self.display_area.start_col_idx,
-      self.display_area.max_row_idx,
-      self.display_area.max_col_idx)
-
-    # status bar
-    status_bar_text = f" Use ARROW keys to Move | Commands: SPACE to Toggle Cell | D to {'disable' if draw_mode else 'enable'} Draw Mode | ENTER to Save | ESC to Discard | P to Paste RLE Data | L to Load RLE File"
-    self.screen_text.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, 0)
-    status_bar_padding = " " * ((self.display_area.max_col_idx + 2) - len(status_bar_text) - 1)
-    self.screen_text.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, len(status_bar_text))
-
-  def make_matrix_from_coords(self, cell_coordinate_sets):
-    if len(cell_coordinate_sets) == 0:
-      return [[]]
-    
-    min_row, min_col = cell_coordinate_sets[0]
-    max_row, max_col = cell_coordinate_sets[0]
-
-    for row, col in cell_coordinate_sets:
-      if row < min_row:
-        min_row = row
-      if col < min_col:
-        min_col = col
-      if row > max_row:
-        max_row = row
-      if col > max_col:
-        max_col = col
-
-    adj_rows = max_row - min_row + 1
-    adj_cols = max_col - min_col + 1
-    adj_cell_coordinate_sets = []
-    
-    for row, col in cell_coordinate_sets:
-      adj_cell_coordinate_sets.append((row - min_row, col - min_col))
-
-    matrix = [[0 for _ in range(adj_cols)] for _ in range(adj_rows)]
-
-    for row_idx in range(adj_rows):
-      for col_idx in range(adj_cols):
-        if (row_idx, col_idx) in adj_cell_coordinate_sets:
-          matrix[row_idx][col_idx] = 1
-    
-    return matrix
-
-  def save_pattern(self, cell_coordinate_list):
-    if len(cell_coordinate_list) > 0:
-      pattern_matrix = self.make_matrix_from_coords(cell_coordinate_list)
-      pattern_file = open("pattern.txt", "w")
-      for row in pattern_matrix:
-        pattern_file.write(str(row) + "\n")
-      pattern_file.close()
-    else:
-      self.screen_text.modal_popup("Nothing to save!", self.display_area, 3)
-
-  def load_rle_data_into_editor(self, rle_data):
-    s = "x = 5, y = 18, rule = B3/S23\n3bo$4bo$o3bo$b4o4$o$b2o$2bo$2bo$bo3$3bo$4bo$o3bo$b4o!"
-    s = "x = 76, y = 59, rule = B3/S23\n12bo$13b2o$12b2o2$5bo$3bobo4bo$4b2o5b2o$10b2o2$3bo$bobo$2b2o2$73bobo$73b2o$74bo11$30bo$31b2o$30b2o24$63b3o$63bo$64bo2$34b2o$35b2o$34bo!"
-    s = "x = 26, y = 12, rule = LifeHistory:C40,20\n15.A$2A12.A9.2A$A.A11.3A6.A.A$A24.A4$9.A.A$8.A$8.A$8.A2.A$8.3A!"
-    s = "x = 49, y = 26, rule = B3/S23\n20b3o3b3o$19bo2bo3bo2bo$4o18bo3bo18b4o$o3bo17bo3bo17bo3bo$o8bo12bo3bo12bo8bo$bo2bo2b2o2bo25bo2b2o2bo2bo$6bo5bo7b3o3b3o7bo5bo$6bo5bo8bo5bo8bo5bo$6bo5bo8b7o8bo5bo$bo2bo2b2o2bo2b2o4bo7bo4b2o2bo2b2o2bo2bo$o8bo3b2o4b11o4b2o3bo8bo$o3bo9b2o17b2o9bo3bo$4o11b19o11b4o$16bobo11bobo$19b11o$19bo9bo$20b9o$24bo$20b3o3b3o$22bo3bo2$21b3ob3o$21b3ob3o$20bob2ob2obo$20b3o3b3o$21bo5bo!"
-
-    pattern = self.pattern_helper.rle_to_matrix(rle_data, self.display_area.max_row_idx, self.display_area.max_col_idx)
-
-    return pattern
 
 if __name__ == "__main__":
   gol = GameOfLife()
