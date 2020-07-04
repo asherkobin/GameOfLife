@@ -36,14 +36,15 @@ class GameOfLife():
     self.current_menu_choices = self.main_menu_choices
     self.custom_pattern_menu_choices = []
 
-    dir_entries = os.listdir()
+    saved_patterns_dir = "./saved_patterns"
+    dir_entries = os.listdir(saved_patterns_dir)
 
     for dir_entry in dir_entries:
       if dir_entry[-4:] == ".gol":
         pattern_name = dir_entry[0:-4]
         pattern_name = pattern_name.replace("_", " ")
         
-        with open(dir_entry, "r") as pattern_file:
+        with open(saved_patterns_dir + "/" + dir_entry, "r") as pattern_file:
           pattern_file_lines = pattern_file.readlines()
           pattern_matrix = []
 

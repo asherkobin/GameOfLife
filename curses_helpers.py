@@ -155,6 +155,8 @@ class PatternHelper():
       if rle_info["rule"] != "B3/S23":
         raise RleException(f"Invalid format: {rle_info['rule']}")
 
+      rle_start += 1
+
       rle_lines = rle_lines[rle_start:]
       rle_data = ""
 
