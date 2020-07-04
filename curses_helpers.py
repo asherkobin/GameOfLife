@@ -4,17 +4,35 @@ from curses_colors import ColorPair
 import time
 
 class DisplayArea():
-  def __init__(self, start_row_idx, start_col_idx, max_row_idx, max_col_idx):
-    self.start_row_idx = start_row_idx
-    self.start_col_idx = start_col_idx
-    self.max_row_idx = max_row_idx
-    self.max_col_idx = max_col_idx
+  def __init__(self, start_row_idx, start_col_idx, num_rows, num_cols):
+    self.__start_row_idx__ = start_row_idx
+    self.__start_col_idx__ = start_col_idx
+    self.__num_rows__ = num_rows
+    self.__num_cols__ = num_cols
+
+  def get_top(self):
+    return self.__start_row_idx__
+  
+  def get_left(self):
+    return self.__start_col_idx__
+
+  def get_height(self):
+    return self.__num_rows__
+
+  def get_width(self):
+    return self.__num_cols__
 
   def get_num_rows(self):
-    return self.max_row_idx - self.start_row_idx
+    return self.get_height()
 
   def get_num_cols(self):
-    return self.max_col_idx - self.start_col_idx
+    return self.get_width()
+
+  def get_start_row(self):
+    return self.get_top()
+
+  def get_start_col(self):
+    return self.get_left()
 
 class CursesScreen():
   def __init__(self, stdscr):
@@ -30,25 +48,29 @@ class CursesScreen():
     self.stdscr.insstr(row_idx, col_idx, string)
     self.stdscr.attroff(curses.color_pair(color_pair))
 
-  def rectangle(self, start_row, start_col, end_row, end_col, color_pair = ColorPair.WHITE_ON_BLACK, print_bg = False):
+  def rectangle(self, start_row, start_col, num_rows, num_cols, color_pair = ColorPair.WHITE_ON_BLACK, print_bg = False):
     self.stdscr.attron(curses.color_pair(color_pair))
-    self.stdscr.vline(start_row + 1, start_col, curses.ACS_VLINE, end_row - start_row - 1)
-    self.stdscr.hline(start_row, start_col +1 , curses.ACS_HLINE, end_col - start_col - 1)
-    
+
+    self.stdscr.addch(start_row, start_col, curses.ACS_ULCORNER)
+    self.stdscr.hline(start_row, start_col + 1, curses.ACS_HLINE, num_cols - 1)
+    self.stdscr.addch(start_row, num_cols + start_col, curses.ACS_URCORNER)
+
     if print_bg:
-      bg_num_lines = end_row - start_row - 1
+      bg_num_lines = num_rows - 2
       bg_start_idx = 0
       while bg_num_lines > 0:
-        self.stdscr.hline(start_row + 1 + bg_start_idx, start_col + 1, " ", end_col - start_col - 1)
+        self.stdscr.hline(start_row + 1 + bg_start_idx, start_col + 1, "*", num_cols - 1)
         bg_start_idx += 1
         bg_num_lines -= 1
+
+    self.stdscr.vline(start_row + 1, start_col, curses.ACS_VLINE, num_rows - 2)
+    self.stdscr.vline(start_row + 1, start_col + num_cols, curses.ACS_VLINE, num_rows - 2)
     
-    self.stdscr.hline(end_row, start_col+1, curses.ACS_HLINE, end_col - start_col - 1)
-    self.stdscr.vline(start_row+1, end_col, curses.ACS_VLINE, end_row - start_row - 1)
-    self.stdscr.addch(start_row, start_col, curses.ACS_ULCORNER)
-    self.stdscr.addch(start_row, end_col, curses.ACS_URCORNER)
-    self.stdscr.addch(end_row, end_col, curses.ACS_LRCORNER)
-    self.stdscr.addch(end_row, start_col, curses.ACS_LLCORNER)
+
+    self.stdscr.addch(start_row + num_rows -1, start_col, curses.ACS_LLCORNER)
+    self.stdscr.hline(start_row + num_rows - 1, start_col + 1, curses.ACS_HLINE, num_cols - 1)
+    self.stdscr.addch(start_row + num_rows - 1, start_col + num_cols, curses.ACS_LRCORNER)    
+    
     self.stdscr.attroff(curses.color_pair(color_pair))
 
   def modal_popup(self, text, display_area, delay_secs = 5):

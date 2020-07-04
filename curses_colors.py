@@ -11,6 +11,8 @@ class ColorPair():
   
   BLACK_ON_WHITE      =  10
   WHITE_ON_BLUE       =  11
+  WHITE_ON_YELLOW     =  12
+  BLACK_ON_YELLOW     =  13
   
   GRADIENT_1_ON_BLACK = 100
   GRADIENT_2_ON_BLACK = 101
@@ -51,10 +53,15 @@ class CursesColorHelper:
     curses.init_pair(ColorPair.GRADIENT_4_ON_BLACK, CustomColors.GRADIENT_4, curses.COLOR_BLACK)
     curses.init_pair(ColorPair.GRADIENT_5_ON_BLACK, CustomColors.GRADIENT_5, curses.COLOR_BLACK)
 
-    curses.init_pair(ColorPair.WHITE_ON_BLACK, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    
     curses.init_pair(ColorPair.BLACK_ON_WHITE, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    curses.init_pair(ColorPair.GREEN_ON_BLACK, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    
     curses.init_pair(ColorPair.WHITE_ON_BLUE, curses.COLOR_WHITE, curses.COLOR_BLUE)
+    curses.init_pair(ColorPair.WHITE_ON_YELLOW, curses.COLOR_WHITE, curses.COLOR_YELLOW)
+    curses.init_pair(ColorPair.BLACK_ON_YELLOW, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+    
+    curses.init_pair(ColorPair.WHITE_ON_BLACK, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.init_pair(ColorPair.GREEN_ON_BLACK, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(ColorPair.BLUE_ON_BLACK, curses.COLOR_BLUE, curses.COLOR_BLACK)
     curses.init_pair(ColorPair.YELLOW_ON_BLACK, curses.COLOR_YELLOW, curses.COLOR_BLACK)
     curses.init_pair(ColorPair.RED_ON_BLACK, curses.COLOR_RED, curses.COLOR_BLACK)

@@ -19,19 +19,19 @@ else if C is dead
     C become alive
 
 BUGS:
-- Bounds on EDIT
+- Bounds on EDIT - Fixed
 - Menu Ordering after EDIT - Fixed
-- EDIT curosr not big enough
-- Generations does not reset
-- Edge coditons on evolve
+- EDIT curosr not big enough - Fixed
+- Edge coditons on evolve - Fixed
+- Crash on console window resize
 
 TODO:
-- Make CLASSES !
+- Make CLASSES ! - Done
 - Count generations - Done
 - Color particles based on age - Done
 - Create background grid
-- Edit TOGGLE
-- Text on Home Page
-- Matrix off-screen or wrap
+- Edit TOGGLE - Done
+- Text on Home Page - Done
+- Matrix off-screen or wrap - Done
 - Make menu dividers or Sub-menus
 - Get average distrubution of cell age to better represent color gradients

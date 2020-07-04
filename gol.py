@@ -31,7 +31,7 @@ class GameOfLife():
     self.pattern_helper = PatternHelper(self.display_area.get_num_rows(), self.display_area.get_num_cols())
     self.edit_mode = EditMode(self.curses_screen, self.display_area, self.pattern_helper)
 
-    self.main_menu_choices = ["Popular Patterns", "Random Pattern", "Create New Pattern", "Saved Patterns", "Load from RLE", "Quit"]
+    self.main_menu_choices = ["Popular Patterns", "Random Pattern", "Create New Pattern", "Saved Patterns", "Quit"]
     self.pattern_menu_choices = [*self.pattern_helper.get_pattern_names()]
     self.current_menu_choices = self.main_menu_choices
     self.custom_pattern_menu_choices = []
@@ -62,6 +62,9 @@ class GameOfLife():
 
     # hide cursor
     curses.curs_set(0)
+
+    self.get_text_input()
+    return
     
     menu_idx = 0
     custom_pattern_menu_idx = 1
@@ -108,9 +111,6 @@ class GameOfLife():
             if len(self.custom_pattern_menu_choices) > 0:
               self.current_menu_choices = self.custom_pattern_menu_choices
               menu_idx = 0
-
-          elif self.main_menu_choices[menu_idx] == "Load from RLE":
-            self.curses_screen.modal_popup("Load from RLE Not Implemented", self.display_area, 2)
           
         elif self.current_menu_choices is self.pattern_menu_choices:
           self.show_evolution(self.pattern_menu_choices[menu_idx])
@@ -139,6 +139,12 @@ class GameOfLife():
     author_msg = "Implemented in Python by Asher Kobin"
     instructions_msg = "Choose from a list of popular patterns, generate a random pattern, or create your own."
     secondary_msg = "Discover other patterns at https://www.conwaylife.com/wiki/Category:Patterns"
+
+    invert_instructions_msg = False
+    
+    if self.current_menu_choices is self.custom_pattern_menu_choices:
+      instructions_msg = " Saved Patterns "
+      invert_instructions_msg = True
     
     if num_rows < 30:
       start_row = 2
@@ -148,7 +154,7 @@ class GameOfLife():
     welcome_msg_row = start_row
     author_msg_row = start_row + 2
     instructions_msg_row = start_row + 8
-    secondary_msg_row = start_row + 20
+    secondary_msg_row = start_row + 22
     
     # calculate the starting column to center the mesage
     welcome_msg_col = num_cols // 2 - len(welcome_msg) // 2
@@ -161,7 +167,11 @@ class GameOfLife():
     self.curses_screen.print(welcome_msg, ColorPair.GREEN_ON_BLACK, welcome_msg_row, welcome_msg_col)
     self.curses_screen.print(author_msg, ColorPair.CYAN_ON_BLACK, author_msg_row, author_msg_col)
 
-    self.curses_screen.print(instructions_msg, ColorPair.WHITE_ON_BLACK, instructions_msg_row, instructions_msg_col)
+    if invert_instructions_msg:
+      self.curses_screen.print(instructions_msg, ColorPair.BLACK_ON_WHITE, instructions_msg_row, instructions_msg_col)
+    else:
+      self.curses_screen.print(instructions_msg, ColorPair.WHITE_ON_BLACK, instructions_msg_row, instructions_msg_col)
+    
     self.curses_screen.print(secondary_msg, ColorPair.YELLOW_ON_BLACK, secondary_msg_row, secondary_msg_col)
 
     menu_start_row = start_row + 12
@@ -406,78 +416,88 @@ class GameOfLife():
   WORK IN PROGRESS
   """
   def get_text_input(self):
-    #curses.curs_set(0)
-    #self.get_text_input()
-    #self.screen_text.modal_popup("Help!", self.display_area, 0)
-    #self.stdscr.getch()
-    #return
-    import os
-    #self.screen_text.rectangle(15, 19, 19, 70)
-    #text_input_win = curses.newwin(1, 50, 20, 20)
-    #text_input = curses.textpad.Textbox(text_input_win)
-    
-    #self.screen_text.rectangle(19, 19, 21, 70)
-    
-    #curses.curs_set(1)
-    #text_input.edit()
-    #curses.curs_set(0)
     self.stdscr.clear()
     
     self.stdscr.attron(curses.color_pair(ColorPair.WHITE_ON_BLUE))
 
-    dlg_width = 50
-    dlg_title = "Select an RLE File"
-    dlg_title_start = dlg_width // 2 - len(dlg_title) // 2 + 1
-    dir_entries = os.listdir()
+    dlg_edit_height = 3
     
-    self.stdscr.addch(0, 0, curses.ACS_ULCORNER)
-    self.stdscr.hline(0, 1, curses.ACS_HLINE, dlg_width)
-    self.stdscr.addch(0, dlg_width + 1, curses.ACS_URCORNER)
+    dlg_rect = DisplayArea(14, 5, dlg_edit_height + 4, 50)
+    
+    dlg_top = dlg_rect.get_top()
+    dlg_left = dlg_rect.get_left()
+    dlg_width = dlg_rect.get_width()
+    dlg_height = dlg_rect.get_height()
+    
+    dlg_edit_rect = DisplayArea(dlg_top + 3, dlg_left + 1, dlg_edit_height, dlg_width)
+    
+    dlg_title = " Enter Name for Pattern "
+    dlg_title_left = dlg_left + (dlg_width // 2 - len(dlg_title) // 2 + 1)
 
-    self.stdscr.hline(1, 1, ord(' '), dlg_width)
-    self.stdscr.addstr(1, dlg_title_start, dlg_title)
+    self.stdscr.hline(dlg_top, dlg_left, ord(' '), dlg_width)
+    
+    self.stdscr.vline(dlg_top + 1, dlg_left, ord(' '), dlg_height + 2)
+    self.stdscr.addch(dlg_top + 1, dlg_left + 1, curses.ACS_ULCORNER)
+    self.stdscr.hline(dlg_top + 1, dlg_left + 2, curses.ACS_HLINE, dlg_width - 4)
+    self.stdscr.addch(dlg_top + 1, dlg_left + dlg_width - 2, curses.ACS_URCORNER)
+    self.stdscr.vline(dlg_top + 1, dlg_left + dlg_width - 1, ord(' '), dlg_height + 2)
 
-    self.stdscr.vline(1, 0, curses.ACS_VLINE, 1)
-    self.stdscr.vline(1, dlg_width + 1, curses.ACS_VLINE, 1)
+    self.stdscr.addstr(dlg_top + 1, dlg_title_left, dlg_title)
     
-    self.stdscr.addch(2, 0, curses.ACS_LTEE)
-    self.stdscr.hline(2, 1, curses.ACS_HLINE, dlg_width)
-    self.stdscr.addch(2, dlg_width + 1, curses.ACS_RTEE)
+    self.stdscr.hline(dlg_top + 2, dlg_left + 2, ord(' '), dlg_width - 4)
 
-    _, dir_names, file_names = next(os.walk("."))
-    cur_row = 3
     
-    self.stdscr.addstr(cur_row, 1, "..")
-    cur_row += 1
-    
-    for dir_name in dir_names:
-      self.stdscr.addstr(cur_row, 1, "/" + dir_name)
-      cur_row += 1
-      if cur_row > 12:
-        break
+    self.stdscr.vline(dlg_top + 2, dlg_left + 1, curses.ACS_VLINE, dlg_edit_height + 2)
+    self.stdscr.vline(dlg_top + 2, dlg_left + 2, ord(' '), dlg_edit_height + 2)
+    self.stdscr.vline(dlg_top + 2, dlg_left + dlg_width - 3, ord(' '), dlg_edit_height + 2)
+    self.stdscr.vline(dlg_top + 2, dlg_left + dlg_width - 2, curses.ACS_VLINE, dlg_edit_height + 2)
 
-    for file_name in file_names:
-      stat_info = os.stat(file_name)
-      file_size = stat_info.st_size
-      self.stdscr.addstr(cur_row, 1, file_name + f"    {file_size}")
-      cur_row += 1
-      if cur_row > 12:
-        break
-    
-    self.stdscr.vline(3, 0, curses.ACS_VLINE, 10)
-    self.stdscr.vline(3, dlg_width + 1, curses.ACS_VLINE, 10)
-    
-    self.stdscr.addch(13, 0, curses.ACS_LLCORNER)
-    self.stdscr.hline(13, 1, curses.ACS_HLINE, dlg_width)
-    self.stdscr.addch(13, dlg_width + 1, curses.ACS_LRCORNER)
+    self.stdscr.hline(dlg_top + dlg_edit_height + 3, dlg_left + 2, ord(' '), dlg_width - 4)
 
-    self.stdscr.attroff(curses.color_pair(ColorPair.WHITE_ON_BLUE))  
+    self.stdscr.addch(dlg_top + dlg_edit_height + 4, dlg_left + 1, curses.ACS_LTEE)
+    self.stdscr.hline(dlg_top + dlg_edit_height + 4, dlg_left + 2, curses.ACS_HLINE, dlg_width - 4)
+    self.stdscr.addch(dlg_top + dlg_edit_height + 4, dlg_left + dlg_width - 2, curses.ACS_RTEE)
+    
+    self.stdscr.vline(dlg_top + dlg_edit_height + 5, dlg_left + 1, curses.ACS_VLINE, 1)
+    self.stdscr.vline(dlg_top + dlg_edit_height + 5, dlg_left + dlg_width - 2, curses.ACS_VLINE, 1)
+    
+    self.stdscr.addch(dlg_top + dlg_edit_height + 6, dlg_left + 1, curses.ACS_LLCORNER)
+    self.stdscr.hline(dlg_top + dlg_edit_height + 6, dlg_left + 2, curses.ACS_HLINE, dlg_width - 4)
+    self.stdscr.addch(dlg_top + dlg_edit_height + 6, dlg_left + dlg_width - 2, curses.ACS_LRCORNER)
+
+    dlg_help_text = "CTRL-G to Save"
+    dlg_help_text_top = dlg_top + dlg_edit_height + 5
+    dlg_help_text_left = dlg_left + (dlg_width // 2 - len(dlg_help_text) // 2 + 1)
+
+    self.stdscr.hline(dlg_help_text_top, dlg_left + 2, ord(' '), dlg_width - 4)
+    self.stdscr.addstr(dlg_help_text_top, dlg_help_text_left, dlg_help_text)
+
+    self.stdscr.hline(dlg_top + dlg_edit_height + 7, dlg_left, ord(' '), dlg_width)
+
+    self.stdscr.attroff(curses.color_pair(ColorPair.WHITE_ON_BLUE))
+
+    # self.curses_screen.rectangle(
+    #   dlg_edit_rect.get_start_row(),
+    #   dlg_edit_rect.get_start_col(),
+    #   dlg_edit_rect.get_num_rows(),
+    #   dlg_edit_rect.get_num_cols(), ColorPair.WHITE_ON_BLACK, True)
+
+    text_input_win = curses.newwin(
+      dlg_edit_rect.get_num_rows(),
+      dlg_edit_rect.get_num_cols(),
+      dlg_edit_rect.get_start_row(),
+      dlg_edit_rect.get_start_col())
     
     self.stdscr.refresh()
+
+    text_input = curses.textpad.Textbox(text_input_win)
     self.stdscr.getch()
-    self.stdscr.clear()
     
-    return "HI" #text_input.gather()
+    # curses.curs_set(1)
+    # text_input.edit()
+    # curses.curs_set(0)
+
+    return text_input.gather()
 
 if __name__ == "__main__":
   gol = GameOfLife()
