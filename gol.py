@@ -27,7 +27,7 @@ class GameOfLife():
     self.stdscr = stdscr
     self.curses_color_helper.init_color_pairs()
     self.curses_screen = CursesScreen(stdscr)
-    self.display_area = DisplayArea(0, 0, self.stdscr.getmaxyx()[0] - 2, self.stdscr.getmaxyx()[1] - 1)
+    self.display_area = DisplayArea(0, 0, self.stdscr.getmaxyx()[0] - 1, self.stdscr.getmaxyx()[1])
     self.pattern_helper = PatternHelper(self.display_area.get_num_rows(), self.display_area.get_num_cols())
     self.edit_mode = EditMode(self.curses_screen, self.display_area, self.pattern_helper)
 
@@ -62,9 +62,6 @@ class GameOfLife():
 
     # hide cursor
     curses.curs_set(0)
-
-    self.get_text_input()
-    return
     
     menu_idx = 0
     custom_pattern_menu_idx = 1
@@ -88,13 +85,13 @@ class GameOfLife():
           menu_idx += 1
         else:
           menu_idx = 0
-      elif key == curses.KEY_ENTER or key in [10, 13] or key == curses.ascii.SP:
+      elif key == curses.ascii.NL or key == curses.ascii.SP:
         if self.current_menu_choices is self.main_menu_choices:
           if self.main_menu_choices[menu_idx] == "Quit":
             break
 
           elif self.main_menu_choices[menu_idx] == "Create New Pattern":
-            new_pattern_name = self.edit_mode.start(custom_pattern_menu_idx, False) # edit mode
+            new_pattern_name = self.edit_mode.start(False) # edit mode
             if new_pattern_name != None:
               self.curses_screen.modal_popup("Your new design is available under the 'Saved Patterns' menu item.", self.display_area, 3)
               self.custom_pattern_menu_choices.append(new_pattern_name)
@@ -162,7 +159,12 @@ class GameOfLife():
     instructions_msg_col = num_cols // 2 - len(instructions_msg) // 2
     secondary_msg_col = num_cols // 2 - len(secondary_msg) // 2
 
-    self.curses_screen.rectangle(start_row - 2, author_msg_col - 2, start_row + 4, author_msg_col + len(author_msg) + 1, ColorPair.WHITE_ON_BLACK)
+    self.curses_screen.rectangle(
+      start_row - 2,
+      author_msg_col - 2,
+      7,
+      len(author_msg) + 3,
+      ColorPair.WHITE_ON_BLACK)
 
     self.curses_screen.print(welcome_msg, ColorPair.GREEN_ON_BLACK, welcome_msg_row, welcome_msg_col)
     self.curses_screen.print(author_msg, ColorPair.CYAN_ON_BLACK, author_msg_row, author_msg_col)
@@ -187,9 +189,9 @@ class GameOfLife():
     
     # status bar
     status_bar_text = " Use ARROW keys to Select Option | Press ESC to Quit"
-    self.curses_screen.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, 0)
-    status_bar_padding = " " * ((self.display_area.max_col_idx + 2) - len(status_bar_text) - 1)
-    self.curses_screen.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, len(status_bar_text))
+    self.curses_screen.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.get_num_rows(), 0)
+    status_bar_padding = " " * ((self.display_area.get_num_cols() + 2) - len(status_bar_text) - 1)
+    self.curses_screen.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.get_num_rows(), len(status_bar_text))
 
     self.stdscr.refresh()
 
@@ -216,7 +218,7 @@ class GameOfLife():
     # 5) evolve
     # 6) goto step 3
     
-    cell_matrix = CellMatrix(num_rows - 1, num_cols - 1, wrap_around)
+    cell_matrix = CellMatrix(num_rows - 2, num_cols - 2, wrap_around) # adjust for borders
   
     self.load_pattern(shape_name, cell_matrix)
     self.print_display_ui(current_delay, num_of_evolutions, wrap_around)
@@ -344,10 +346,10 @@ class GameOfLife():
   def print_display_ui(self, interval_speed, num_of_evolutions, wrap_around):
     # display screen border
     self.curses_screen.rectangle(
-      self.display_area.start_row_idx,
-      self.display_area.start_col_idx,
-      self.display_area.max_row_idx,
-      self.display_area.max_col_idx)
+      self.display_area.get_start_row(),
+      self.display_area.get_start_col(),
+      self.display_area.get_num_rows(),
+      self.display_area.get_num_cols() - 1) # leave room for status bar
 
     if wrap_around:
       wrap_around_mode = "W"
@@ -356,9 +358,9 @@ class GameOfLife():
 
     # status bar
     status_bar_text = f" Press ESC to Quit | Use ARROW UP or ARROW DOWN to Change Speed | SPACE to Pause (Any KEY for One Evolution) | Speed: {interval_speed} | Mode: {wrap_around_mode} | Generations: {num_of_evolutions}"
-    self.curses_screen.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, 0)
-    status_bar_padding = " " * ((self.display_area.max_col_idx + 2) - len(status_bar_text) - 1)
-    self.curses_screen.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, len(status_bar_text))
+    self.curses_screen.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.get_num_rows(), 0)
+    status_bar_padding = " " * ((self.display_area.get_num_cols() + 2) - len(status_bar_text) - 1)
+    self.curses_screen.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.get_num_rows(), len(status_bar_text))
 
   def print_matrix(self, cell_matrix):
     drew_cell = False
@@ -411,93 +413,6 @@ class GameOfLife():
           drew_cell = True
   
     return drew_cell # if False, then there are no living cells
-
-  """
-  WORK IN PROGRESS
-  """
-  def get_text_input(self):
-    self.stdscr.clear()
-    
-    self.stdscr.attron(curses.color_pair(ColorPair.WHITE_ON_BLUE))
-
-    dlg_edit_height = 3
-    
-    dlg_rect = DisplayArea(14, 5, dlg_edit_height + 4, 50)
-    
-    dlg_top = dlg_rect.get_top()
-    dlg_left = dlg_rect.get_left()
-    dlg_width = dlg_rect.get_width()
-    dlg_height = dlg_rect.get_height()
-    
-    dlg_edit_rect = DisplayArea(dlg_top + 3, dlg_left + 1, dlg_edit_height, dlg_width)
-    
-    dlg_title = " Enter Name for Pattern "
-    dlg_title_left = dlg_left + (dlg_width // 2 - len(dlg_title) // 2 + 1)
-
-    self.stdscr.hline(dlg_top, dlg_left, ord(' '), dlg_width)
-    
-    self.stdscr.vline(dlg_top + 1, dlg_left, ord(' '), dlg_height + 2)
-    self.stdscr.addch(dlg_top + 1, dlg_left + 1, curses.ACS_ULCORNER)
-    self.stdscr.hline(dlg_top + 1, dlg_left + 2, curses.ACS_HLINE, dlg_width - 4)
-    self.stdscr.addch(dlg_top + 1, dlg_left + dlg_width - 2, curses.ACS_URCORNER)
-    self.stdscr.vline(dlg_top + 1, dlg_left + dlg_width - 1, ord(' '), dlg_height + 2)
-
-    self.stdscr.addstr(dlg_top + 1, dlg_title_left, dlg_title)
-    
-    self.stdscr.hline(dlg_top + 2, dlg_left + 2, ord(' '), dlg_width - 4)
-
-    
-    self.stdscr.vline(dlg_top + 2, dlg_left + 1, curses.ACS_VLINE, dlg_edit_height + 2)
-    self.stdscr.vline(dlg_top + 2, dlg_left + 2, ord(' '), dlg_edit_height + 2)
-    self.stdscr.vline(dlg_top + 2, dlg_left + dlg_width - 3, ord(' '), dlg_edit_height + 2)
-    self.stdscr.vline(dlg_top + 2, dlg_left + dlg_width - 2, curses.ACS_VLINE, dlg_edit_height + 2)
-
-    self.stdscr.hline(dlg_top + dlg_edit_height + 3, dlg_left + 2, ord(' '), dlg_width - 4)
-
-    self.stdscr.addch(dlg_top + dlg_edit_height + 4, dlg_left + 1, curses.ACS_LTEE)
-    self.stdscr.hline(dlg_top + dlg_edit_height + 4, dlg_left + 2, curses.ACS_HLINE, dlg_width - 4)
-    self.stdscr.addch(dlg_top + dlg_edit_height + 4, dlg_left + dlg_width - 2, curses.ACS_RTEE)
-    
-    self.stdscr.vline(dlg_top + dlg_edit_height + 5, dlg_left + 1, curses.ACS_VLINE, 1)
-    self.stdscr.vline(dlg_top + dlg_edit_height + 5, dlg_left + dlg_width - 2, curses.ACS_VLINE, 1)
-    
-    self.stdscr.addch(dlg_top + dlg_edit_height + 6, dlg_left + 1, curses.ACS_LLCORNER)
-    self.stdscr.hline(dlg_top + dlg_edit_height + 6, dlg_left + 2, curses.ACS_HLINE, dlg_width - 4)
-    self.stdscr.addch(dlg_top + dlg_edit_height + 6, dlg_left + dlg_width - 2, curses.ACS_LRCORNER)
-
-    dlg_help_text = "CTRL-G to Save"
-    dlg_help_text_top = dlg_top + dlg_edit_height + 5
-    dlg_help_text_left = dlg_left + (dlg_width // 2 - len(dlg_help_text) // 2 + 1)
-
-    self.stdscr.hline(dlg_help_text_top, dlg_left + 2, ord(' '), dlg_width - 4)
-    self.stdscr.addstr(dlg_help_text_top, dlg_help_text_left, dlg_help_text)
-
-    self.stdscr.hline(dlg_top + dlg_edit_height + 7, dlg_left, ord(' '), dlg_width)
-
-    self.stdscr.attroff(curses.color_pair(ColorPair.WHITE_ON_BLUE))
-
-    # self.curses_screen.rectangle(
-    #   dlg_edit_rect.get_start_row(),
-    #   dlg_edit_rect.get_start_col(),
-    #   dlg_edit_rect.get_num_rows(),
-    #   dlg_edit_rect.get_num_cols(), ColorPair.WHITE_ON_BLACK, True)
-
-    text_input_win = curses.newwin(
-      dlg_edit_rect.get_num_rows(),
-      dlg_edit_rect.get_num_cols(),
-      dlg_edit_rect.get_start_row(),
-      dlg_edit_rect.get_start_col())
-    
-    self.stdscr.refresh()
-
-    text_input = curses.textpad.Textbox(text_input_win)
-    self.stdscr.getch()
-    
-    # curses.curs_set(1)
-    # text_input.edit()
-    # curses.curs_set(0)
-
-    return text_input.gather()
 
 if __name__ == "__main__":
   gol = GameOfLife()

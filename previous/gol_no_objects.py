@@ -475,7 +475,7 @@ def setup_gol(stdscr):
       menu_idx -= 1
     elif key == curses.KEY_DOWN and menu_idx < len(menu_choices) - 1:
       menu_idx += 1
-    elif key == curses.KEY_ENTER or key in [10, 13] or key == curses.ascii.SP:
+    elif key == curses.ascii.NL or key == curses.ascii.SP:
       if menu_choices[menu_idx] == "Exit":
         break
       elif menu_choices[menu_idx] == "Custom Pattern":

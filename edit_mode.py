@@ -1,6 +1,6 @@
 import curses
 from curses_colors import ColorPair
-from curses_helpers import RleException
+from curses_helpers import RleException, TextInputDialog
 
 class EditMode():
   def __init__(self, curses_screen, display_area, pattern_helper):
@@ -13,22 +13,23 @@ class EditMode():
     self.num_rows = self.display_area.get_num_rows()
     self.num_cols = self.display_area.get_num_cols()
     self.draw_mode = False
+    self.save_dialog = TextInputDialog(curses_screen.stdscr, display_area)
 
   def print_edit_ui(self):
     # display screen border
     self.curses_screen.rectangle(
-      self.display_area.start_row_idx,
-      self.display_area.start_col_idx,
-      self.display_area.max_row_idx,
-      self.display_area.max_col_idx)
+      self.display_area.get_start_row(),
+      self.display_area.get_start_col(),
+      self.display_area.get_num_rows(),
+      self.display_area.get_num_cols() - 1) # leave room for status bar
 
     # status bar
     status_bar_text = f" Use ARROW keys to Move | Commands: SPACE to Toggle Cell | D to {'disable' if self.draw_mode else 'enable'} Draw Mode | ENTER to Save | ESC to Discard | P to Paste RLE Data | L to Load RLE File"
-    self.curses_screen.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, 0)
-    status_bar_padding = " " * ((self.display_area.max_col_idx + 2) - len(status_bar_text) - 1)
-    self.curses_screen.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.max_row_idx + 1, len(status_bar_text))
+    self.curses_screen.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.get_num_rows(), 0)
+    status_bar_padding = " " * ((self.display_area.get_num_cols() + 2) - len(status_bar_text) - 1)
+    self.curses_screen.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.get_num_rows(), len(status_bar_text))
 
-  def start(self, custom_pattern_menu_idx, load_rle = False):
+  def start(self, load_rle = False):
     self.cell_coordinate_list = []
     self.draw_mode = False
     
@@ -106,7 +107,7 @@ class EditMode():
       
       # save and quit
 
-      elif key == curses.KEY_ENTER or key in [10, 13]:
+      elif key == curses.ascii.NL:
         break
 
       # discard and quit
@@ -188,12 +189,14 @@ class EditMode():
     if discard_work:
       new_pattern_name = None
     else:
-      new_pattern_name = new_pattern_name + " " + str(custom_pattern_menu_idx)
-      new_pattern_matrix = self.pattern_helper.make_matrix_from_coords(self.cell_coordinate_list)
-      if new_pattern_matrix:
-        self.pattern_helper.add(new_pattern_name, new_pattern_matrix, True)
-      else:
-        new_pattern_name = None
+      new_pattern_name = self.save_dialog.prompt("Enter Name for Pattern")
+      
+      if new_pattern_name is not None:
+        new_pattern_matrix = self.pattern_helper.make_matrix_from_coords(self.cell_coordinate_list)
+        if new_pattern_matrix:
+          self.pattern_helper.add(new_pattern_name, new_pattern_matrix, True)
+        else:
+          new_pattern_name = None
     
     return new_pattern_name
 
