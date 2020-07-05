@@ -93,6 +93,7 @@ class GameOfLife():
           elif self.main_menu_choices[menu_idx] == "Create New Pattern":
             new_pattern_name = self.edit_mode.start(False) # edit mode
             if new_pattern_name != None:
+              self.curses_screen.stdscr.erase()
               self.curses_screen.modal_popup("Your new design is available under the 'Saved Patterns' menu item.", self.display_area, 3)
               self.custom_pattern_menu_choices.append(new_pattern_name)
               custom_pattern_menu_idx += 1

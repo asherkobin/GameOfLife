@@ -107,7 +107,7 @@ class PatternHelper():
 
     if create_file:
       pattern_name = pattern_name.replace(" ", "_")
-      with open(pattern_name + ".gol", "w") as pattern_file:
+      with open("./saved_patterns/" + pattern_name + ".gol", "w") as pattern_file:
         for row in pattern_matrix:
           pattern_file.write(str(row) + "\n")
   
@@ -134,6 +134,8 @@ class PatternHelper():
       for cl_char in cl_line:
         if cl_char == 'O':
           matrix[row_num][col_num] = 1
+        elif cl_char != '.':
+          return None
         col_num += 1
       row_num += 1
       col_num = 0
@@ -263,23 +265,22 @@ class PatternHelper():
     return matrix
 
 class TextInputDialog():
-  def __init__(self, stdscr, display_area):
+  def __init__(self, stdscr, display_area, num_lines = 1):
     self.display_area = display_area
     self.stdscr = stdscr
+    self.width = 50
+    self.num_lines = num_lines
+    self.escape_pressed = False
 
   def prompt(self, dlg_title):
-    self.stdscr.clear()
-    
-    dlg_edit_height = 1
-    
-    dlg_rect = DisplayArea(14, 5, dlg_edit_height + 8, 50)
-    
-    dlg_top = dlg_rect.get_top()
-    dlg_left = dlg_rect.get_left()
-    dlg_width = dlg_rect.get_width()
-    dlg_height = dlg_rect.get_height()
-    
-    dlg_edit_rect = DisplayArea(dlg_top + 3, dlg_left + 3, dlg_edit_height, dlg_width - 6)
+    #self.stdscr.clear()
+
+    dlg_height = self.num_lines + 8
+    dlg_width = self.width
+    dlg_top = self.display_area.get_num_rows() // 2 - dlg_height // 2
+    dlg_left = self.display_area.get_num_cols() // 2 - dlg_width // 2
+
+    dlg_edit_rect = DisplayArea(dlg_top + 3, dlg_left + 3, self.num_lines, dlg_width - 6)
     
     dlg_title = " " + dlg_title + " "
     dlg_title_left = dlg_left
@@ -301,32 +302,32 @@ class TextInputDialog():
     
     self.stdscr.hline(dlg_top + 2, dlg_left + 2, ord(' '), dlg_width - 4)
     
-    self.stdscr.vline(dlg_top + 2, dlg_left + 1, curses.ACS_VLINE, dlg_edit_height + 2)
-    self.stdscr.vline(dlg_top + 2, dlg_left + 2, ord(' '), dlg_edit_height + 2)
-    self.stdscr.vline(dlg_top + 2, dlg_left + dlg_width - 3, ord(' '), dlg_edit_height + 2)
-    self.stdscr.vline(dlg_top + 2, dlg_left + dlg_width - 2, curses.ACS_VLINE, dlg_edit_height + 2)
+    self.stdscr.vline(dlg_top + 2, dlg_left + 1, curses.ACS_VLINE, self.num_lines + 2)
+    self.stdscr.vline(dlg_top + 2, dlg_left + 2, ord(' '), self.num_lines + 2)
+    self.stdscr.vline(dlg_top + 2, dlg_left + dlg_width - 3, ord(' '), self.num_lines + 2)
+    self.stdscr.vline(dlg_top + 2, dlg_left + dlg_width - 2, curses.ACS_VLINE, self.num_lines + 2)
 
-    self.stdscr.hline(dlg_top + dlg_edit_height + 3, dlg_left + 2, ord(' '), dlg_width - 4)
+    self.stdscr.hline(dlg_top + self.num_lines + 3, dlg_left + 2, ord(' '), dlg_width - 4)
 
-    self.stdscr.addch(dlg_top + dlg_edit_height + 4, dlg_left + 1, curses.ACS_LTEE)
-    self.stdscr.hline(dlg_top + dlg_edit_height + 4, dlg_left + 2, curses.ACS_HLINE, dlg_width - 4)
-    self.stdscr.addch(dlg_top + dlg_edit_height + 4, dlg_left + dlg_width - 2, curses.ACS_RTEE)
+    self.stdscr.addch(dlg_top + self.num_lines + 4, dlg_left + 1, curses.ACS_LTEE)
+    self.stdscr.hline(dlg_top + self.num_lines + 4, dlg_left + 2, curses.ACS_HLINE, dlg_width - 4)
+    self.stdscr.addch(dlg_top + self.num_lines + 4, dlg_left + dlg_width - 2, curses.ACS_RTEE)
     
-    self.stdscr.vline(dlg_top + dlg_edit_height + 5, dlg_left + 1, curses.ACS_VLINE, 1)
-    self.stdscr.vline(dlg_top + dlg_edit_height + 5, dlg_left + dlg_width - 2, curses.ACS_VLINE, 1)
+    self.stdscr.vline(dlg_top + self.num_lines + 5, dlg_left + 1, curses.ACS_VLINE, 1)
+    self.stdscr.vline(dlg_top + self.num_lines + 5, dlg_left + dlg_width - 2, curses.ACS_VLINE, 1)
     
-    self.stdscr.addch(dlg_top + dlg_edit_height + 6, dlg_left + 1, curses.ACS_LLCORNER)
-    self.stdscr.hline(dlg_top + dlg_edit_height + 6, dlg_left + 2, curses.ACS_HLINE, dlg_width - 4)
-    self.stdscr.addch(dlg_top + dlg_edit_height + 6, dlg_left + dlg_width - 2, curses.ACS_LRCORNER)
+    self.stdscr.addch(dlg_top + self.num_lines + 6, dlg_left + 1, curses.ACS_LLCORNER)
+    self.stdscr.hline(dlg_top + self.num_lines + 6, dlg_left + 2, curses.ACS_HLINE, dlg_width - 4)
+    self.stdscr.addch(dlg_top + self.num_lines + 6, dlg_left + dlg_width - 2, curses.ACS_LRCORNER)
 
     dlg_help_text = "[ESC] to Cancel | [ENTER] to Save"
-    dlg_help_text_top = dlg_top + dlg_edit_height + 5
+    dlg_help_text_top = dlg_top + self.num_lines + 5
     dlg_help_text_left = dlg_left + (dlg_width // 2 - len(dlg_help_text) // 2)    
 
     self.stdscr.hline(dlg_help_text_top, dlg_left + 2, ord(' '), dlg_width - 4)
     self.stdscr.addstr(dlg_help_text_top, dlg_help_text_left, dlg_help_text)
 
-    self.stdscr.hline(dlg_top + dlg_edit_height + 7, dlg_left, ord(' '), dlg_width)
+    self.stdscr.hline(dlg_top + self.num_lines + 7, dlg_left, ord(' '), dlg_width)
     
     self.stdscr.attroff(curses.color_pair(ColorPair.WHITE_ON_BLUE))
 
@@ -344,12 +345,23 @@ class TextInputDialog():
     text_input.edit(self.handle_key_press)
     curses.curs_set(0)
 
-    return text_input.gather().strip()
+    if self.escape_pressed:
+      return None
+
+    pattern_name = text_input.gather().strip()
+
+    return None if len(pattern_name) == 0 else pattern_name
 
   def handle_key_press(self, key):
     if key == curses.ascii.NL:
       key = curses.ascii.BEL
     elif key == curses.ascii.ESC:
+      self.escape_pressed = True
       key = curses.ascii.BEL
+    elif key == curses.ascii.DEL:
+      key = curses.KEY_BACKSPACE
 
-    return key
+    if chr(key).isalpha() or chr(key).isnumeric() or key == curses.ascii.BEL or key == curses.ascii.SP:
+      return key
+    else:
+      return None

@@ -24,7 +24,7 @@ class EditMode():
       self.display_area.get_num_cols() - 1) # leave room for status bar
 
     # status bar
-    status_bar_text = f" Use ARROW keys to Move | Commands: SPACE to Toggle Cell | D to {'disable' if self.draw_mode else 'enable'} Draw Mode | ENTER to Save | ESC to Discard | P to Paste RLE Data | L to Load RLE File"
+    status_bar_text = f" Use ARROW keys to Move | Commands: SPACE to Toggle Cell | D to {'disable' if self.draw_mode else 'enable'} Draw Mode | ENTER to Save | ESC to Discard | P to Paste RLE or GOL Data"
     self.curses_screen.print(status_bar_text, ColorPair.BLACK_ON_WHITE, self.display_area.get_num_rows(), 0)
     status_bar_padding = " " * ((self.display_area.get_num_cols() + 2) - len(status_bar_text) - 1)
     self.curses_screen.insert(status_bar_padding, ColorPair.BLACK_ON_WHITE, self.display_area.get_num_rows(), len(status_bar_text))
@@ -33,12 +33,11 @@ class EditMode():
     self.cell_coordinate_list = []
     self.draw_mode = False
     
-    new_pattern_name = "User Generated"
+    new_pattern_name = None
     cursor_row = self.num_rows // 2 
     cursor_col = self.num_cols // 2
     prev_cursor_row = None
     prev_cursor_col = None
-    discard_work = False
     cursor_was_on_cell = False
     
     self.print_edit_ui()
@@ -108,14 +107,26 @@ class EditMode():
       # save and quit
 
       elif key == curses.ascii.NL:
-        break
-
+        if len(self.cell_coordinate_list) > 0:
+          new_pattern_name = self.save_dialog.prompt("Enter Name for Pattern")
+          if new_pattern_name is not None:
+            new_pattern_matrix = self.pattern_helper.make_matrix_from_coords(self.cell_coordinate_list)
+            if new_pattern_matrix:
+              self.pattern_helper.add(new_pattern_name, new_pattern_matrix, True)
+              break
+            else:
+              raise Exception("Unknown error when creating pattern")
+          else:
+            repaint_screen = True
+        else:
+          self.curses_screen.modal_popup("Nothing to save", self.display_area, 2)
+          repaint_screen = True
+      
       # discard and quit
       
       elif key == curses.ascii.ESC:
-        discard_work = True
         break
-
+          
       # toggle draw-mode
 
       elif key == ord('d'):
@@ -128,21 +139,9 @@ class EditMode():
       
       elif key == ord('p'):
         paste_result = self.handle_paste()
-        if paste_result != "OK":
-          self.curses_screen.modal_popup(paste_result, self.display_area, 2)
+        if not paste_result:
+          self.curses_screen.modal_popup("No pattern data found on clipboard", self.display_area, 2)
           repaint_screen = True
-
-      # save pattern to file
-
-      elif key == ord('s'):
-        self.handle_save()
-        repaint_screen = True
-
-      # load pattern from file
-
-      elif key == ord('l'):
-        self.handle_load()
-        repaint_screen = True
 
       # process the status of the various flags
 
@@ -176,7 +175,7 @@ class EditMode():
         self.cell_coordinate_list.remove((cursor_row ,cursor_col))
         cursor_on_cell = False        
 
-      elif repaint_screen:
+      if repaint_screen:
         self.curses_screen.stdscr.erase()
         self.print_edit_ui()
         for cell_coordinate in self.cell_coordinate_list:
@@ -185,27 +184,8 @@ class EditMode():
           self.curses_screen.print(self.cell_char, ColorPair.BLACK_ON_WHITE, cursor_row, cursor_col)
         else:
           self.curses_screen.print(self.cursor_char, ColorPair.BLACK_ON_WHITE, cursor_row, cursor_col)
-
-    if discard_work:
-      new_pattern_name = None
-    else:
-      new_pattern_name = self.save_dialog.prompt("Enter Name for Pattern")
-      
-      if new_pattern_name is not None:
-        new_pattern_matrix = self.pattern_helper.make_matrix_from_coords(self.cell_coordinate_list)
-        if new_pattern_matrix:
-          self.pattern_helper.add(new_pattern_name, new_pattern_matrix, True)
-        else:
-          new_pattern_name = None
     
     return new_pattern_name
-
-  def handle_save(self):
-    self.save_pattern(self.cell_coordinate_list)
-    self.curses_screen.modal_popup("Saved to pattern.txt", self.display_area, 2)
-
-  def handle_load(self):
-    self.curses_screen.modal_popup("Load Not Implemented", self.display_area, 2)
 
   def handle_paste(self):
     from clipboard import get_clipboard_text
@@ -214,25 +194,20 @@ class EditMode():
     matrix = None
 
     try:
-      matrix = self.pattern_helper.rle_to_matrix(rle_data, self.display_area.max_row_idx - 1, self.display_area.max_col_idx - 1)
-    except RleException as e:
-      try:
-        matrix = self.pattern_helper.conwaylife_to_matrix(rle_data, self.display_area.max_row_idx - 1, self.display_area.max_col_idx - 1)
-        e.message = "CL_OK"
-      except:
-        e.message = "CL_FAIL"
-      if e.message == "Invalid Format":
-        return "Clipboard does not contain RLE data."
-      elif e.message == "CL_FAIL":
-        return "Clipboard does not contain Conway Life data."
-    
+      matrix = self.pattern_helper.rle_to_matrix(rle_data, self.display_area.get_num_rows(), self.display_area.get_num_cols())
+    except RleException:
+      matrix = self.pattern_helper.conwaylife_to_matrix(rle_data, self.display_area.get_num_rows(), self.display_area.get_num_cols())
+
+    if matrix is None:
+      return False
+
     for row_idx in range(len(matrix)):
       for col_idx in range(len(matrix[0])):
         if matrix[row_idx][col_idx] == 1:
           self.cell_coordinate_list.append((row_idx + 1, col_idx + 1))
           self.curses_screen.print(self.cell_char, ColorPair.WHITE_ON_BLACK, row_idx + 1, col_idx + 1)
 
-    return "OK"  
+    return True
 
   def save_pattern(self, cell_coordinate_list):
     if len(cell_coordinate_list) > 0:
