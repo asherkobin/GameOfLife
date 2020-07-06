@@ -36,6 +36,21 @@ class GameOfLife():
     self.current_menu_choices = self.main_menu_choices
     self.custom_pattern_menu_choices = []
 
+    self.char_blocks = {
+      "Runic": (0x16A0, 0x16F8),
+      "Technical": (0x2300, 0x23FF),
+      "Box Drawing": (0x2500, 0x257F),
+      "Block Elements": (0x2580, 0x259F),
+      "Miscellaneous Symbols": (0x2600, 0x26FF),
+      "Braile": (0x2800, 0x28FF),
+      "Dingbats": (0x2700, 0x27BF)
+    }
+
+    self.char_block = self.char_blocks["Braile"]
+    self.char_block_start = self.char_block[0]
+    self.char_block_end = self.char_block[1]
+    self.char_block_cur = self.char_block_start
+
     saved_patterns_dir = "./saved_patterns"
     dir_entries = os.listdir(saved_patterns_dir)
 
@@ -275,6 +290,11 @@ class GameOfLife():
       elif key == ord('m'): # toggle wrap mode
         wrap_around = not wrap_around
         cell_matrix.wrap_around = wrap_around
+      elif key == ord('c'):
+        if self.char_block_cur < self.char_block_end:
+          self.char_block_cur += 1
+        else:
+          self.char_block_cur = self.char_block_start
       
       self.stdscr.addstr(0, 2, f" Rows: {num_rows} Cols: {num_cols} Cells: {grid_size} FPS: {frames_per_sec} ")
       
@@ -367,7 +387,7 @@ class GameOfLife():
     drew_cell = False
     use_frames = False
     
-    # various 4-frame animations
+    # various 4-frame animations # https://www.unicode.org/charts/PDF/U2800.pdf
     
     char_chars_letters     = ["A", "B", "C", "D"]
     # char_chars_cross_ticks = [chr(0x2540), chr(0x253E), chr(0x2541), chr(0x253D)]
@@ -378,15 +398,28 @@ class GameOfLife():
 
     # other glyphs:
     # blocks: https://www.unicode.org/charts/PDF/U2580.pdf
-    # cell_char_circle_with_dot = u"\u2609"
-    # cell_char_star_burst = u"\u2600"
-    # cell_char_plus = u"\U0000254B"
-    # cell_char_star = "*"
+    
     cell_char_block = u"\u25FC"
-
+    
+    cell_char_line_thin  = u"\u2500"
+    cell_char_line_thick = u"\u2501"
+    cell_char_bar_thick  = u"\u2502"
+    cell_char_bar_thin   = u"\u2503"
+    cell_char_slash      = u"\u2501"
+    cell_char_back_slash = u"\u2572"
+    cell_char_cross      = u"\u2573"
+    
+    cell_char_box = u"\u2395"
+    cell_char_small_block = u"\uFFED"
+    cell_char_domino = u"\u28FF"
+    cell_char_rectangle = "\u2337"
+    cell_char_small_rectangle = u"\u25AF"
+    cell_char_plus = u"\u254B"
+    
+    cell_char = chr(self.char_block_cur)
     
     char_chars_animation = char_chars_letters
-    cell_char = cell_char_block
+    age_steps = [0, 10, 20, 40]
     
     # print the CellMatrix to the display buffer
     
@@ -400,13 +433,13 @@ class GameOfLife():
             cell_frame = cell_state.frame
             cell_char = char_chars_animation[cell_frame]
 
-          if cell_age == 0:
+          if cell_age == age_steps[0]:
             self.curses_screen.print(cell_char, ColorPair.GRADIENT_1_ON_BLACK, row_idx + 1, col_idx + 1)
-          elif cell_age < 20:
+          elif cell_age < age_steps[1]:
             self.curses_screen.print(cell_char, ColorPair.GRADIENT_2_ON_BLACK, row_idx + 1, col_idx + 1)
-          elif cell_age < 50:
+          elif cell_age < age_steps[2]:
             self.curses_screen.print(cell_char, ColorPair.GRADIENT_3_ON_BLACK, row_idx + 1, col_idx + 1)
-          elif cell_age < 100:
+          elif cell_age < age_steps[3]:
             self.curses_screen.print(cell_char, ColorPair.GRADIENT_4_ON_BLACK, row_idx + 1, col_idx + 1)
           else:
             self.curses_screen.print(cell_char, ColorPair.GRADIENT_5_ON_BLACK, row_idx + 1, col_idx + 1)

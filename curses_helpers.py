@@ -112,6 +112,9 @@ class PatternHelper():
           pattern_file.write(str(row) + "\n")
   
   def conwaylife_to_matrix(self, cl_string, max_rows, max_cols):
+    if len(cl_string) == 0:
+      return None
+    
     matrix = None
     cl_lines = cl_string.splitlines()
 
